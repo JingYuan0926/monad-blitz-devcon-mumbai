@@ -30,7 +30,13 @@ export async function POST(request: Request) {
   if (!round[4]) return Response.json({ ok: true, roundId: id.toString(), note: "Today is still open." });
 
   try {
-    const hash = await wallet.writeContract({ ...hexGame, functionName: "nextDay", gas: 800_000n });
+    // Estimate the gas and add 50%. Monad charges the full gas limit, so a fixed high limit wastes MON.
+    const estimate = await publicClient.estimateContractGas({
+      ...hexGame,
+      functionName: "nextDay",
+      account: wallet.account,
+    });
+    const hash = await wallet.writeContract({ ...hexGame, functionName: "nextDay", gas: (estimate * 3n) / 2n });
     await publicClient.waitForTransactionReceipt({ hash });
     return Response.json({ ok: true, hash, roundId: (id + 1n).toString() });
   } catch (error) {
