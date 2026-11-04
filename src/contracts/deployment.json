@@ -1614,5 +1614,13 @@
         }
       ]
     }
+  },
+  "casino": {
+    "TicketRoulette": {
+      "address": "0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3"
+    },
+    "TicketBlackjack": {
+      "address": "0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c"
+    }
   }
 }

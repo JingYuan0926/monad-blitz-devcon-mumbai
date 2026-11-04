@@ -85,31 +85,23 @@ Your savings earn Tickets. Use your Tickets in games and boosters. Winners share
 | Game | Type | Status |
 | --- | --- | --- |
 | Hex Yield Draw | Draw: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
-| Ticket Boosters: Coin Flip, Hex Dice, Rocket, Minefield, Ticket Wheel, All-In Pot | Earn more Tickets | Planned. See <https://morney.fun/casino> |
+| Ticket Boosters: Roulette and Blackjack | Earn more Tickets | Contracts live on testnet. Play screens planned. See <https://morney.fun/casino> |
 | Daily prediction challenges | Prediction | Planned |
 
 Every game uses the same Tickets.
 
-### More ways to earn Tickets (planned)
+### More ways to earn Tickets: Ticket Boosters
 
-Savings are the main way to earn Tickets. **Ticket Boosters** are a second way: short games where you put Tickets in to try to multiply them. You can come out with more Tickets, or lose the Tickets you put in. Your saved USDC never moves. Extra Tickets give you a bigger share in the Hex Yield Draw, where Tickets win real USDC yield.
+Savings are the main way to earn Tickets. **Ticket Boosters** are a second way: put Tickets in and try to multiply them. You can come out with more Tickets, or lose the Tickets you put in. Your saved USDC never moves. Extra Tickets give you a bigger share in the Hex Yield Draw, where Tickets win real USDC yield.
 
-The [Ticket Boosters page](https://morney.fun/casino) shows the plan.
+Two boosters are live as contracts on Monad Testnet. The vault lets them spend and pay Tickets. The [Ticket Boosters page](https://morney.fun/casino) lists them. Their play screens are not built yet, so you call them from the explorer or a script.
 
-| Booster | How it works | Tickets you can earn | Risk |
+| Booster | Contract | How to play | Tickets you get back |
 | --- | --- | --- | --- |
-| Coin Flip | Pick heads or tails. One flip decides it. | 1.96× your stake | Medium |
-| Hex Dice | Pick a number from 1 to 6. A match pays. | 5.8× your stake | High |
-| Rocket | The multiplier climbs until the rocket crashes. Cash out before it does. | Stake × multiplier at cash-out | High |
-| Minefield | Open tiles on a 5×5 grid. Each safe tile raises the multiplier. One mine ends the run. | Up to 24× your stake | High |
-| Ticket Wheel | Spin a wheel with 0×, 1×, 2×, 5× and 20× slices. | 1× to 20× your stake | Medium |
-| All-In Pot | Players add Tickets to one pot. One player wins it all. More Tickets give better odds. | The whole pot | All in |
+| Roulette | [`0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3`](https://testnet.monadexplorer.com/address/0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3) ([verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3)) | `spin(bet, pick, tickets)`. Bet 0 = one number (`pick` 0-36), 1 = red, 2 = black, 3 = odd, 4 = even, 5 = 1-18, 6 = 19-36. | One number: 36×. Every other bet: 2×. A 0 loses every bet except a bet on 0. |
+| Blackjack | [`0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c`](https://testnet.monadexplorer.com/address/0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c) ([verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c)) | `deal(tickets)`, then `hit()` or `stand()`. The dealer draws to 17. | Blackjack: 2.5×. Win: 2×. Tie: 1×. Loss: 0. |
 
-These boosters are not built yet. The page shows the plan only. A loss costs only Tickets, never your savings.
-
-The vault contract is named `SmemVault` because we deployed it before the project rename. The contract name does not change how it works.
-
-**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each day's yield is a simulated random amount from 1,000 to 5,000 USDC, paid from a 3,000,000 USDC prize reserve. The other players' Tickets on each hex are simulated too (1 to 20 per hex). In production, the pool is the real yield that the vault earns on Aave.
+Both boosters use demo randomness from block data, the same as the Hex Yield Draw.
 
 ## Run it yourself
 
@@ -137,6 +129,7 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 5. Deploy: `npm run deploy`. This writes the new addresses to `src/contracts/deployment.json`.
 6. Verify the source: `npm run verify`
 7. Run the full flow on chain: `npm run smoke`
+8. Deploy the Ticket Boosters (Roulette and Blackjack): `npm run deploy-casino`
 
 ## Project layout
 

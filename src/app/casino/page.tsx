@@ -6,56 +6,37 @@ export const metadata: Metadata = {
   description: "Ways to earn more Tickets. Win more Tickets or lose the Tickets you put in. Your savings never move.",
 };
 
+import deployment from "@/contracts/deployment.json";
+import { addressUrl } from "@/lib/wagmi";
+
 type Game = {
   name: string;
   tag: string;
   how: string;
   payout: string;
   risk: "Low" | "Medium" | "High" | "All in";
+  address: string;
+  calls: string;
 };
 
 const GAMES: Game[] = [
   {
-    name: "Coin Flip",
-    tag: "Double or nothing",
-    how: "Pick heads or tails and stake Tickets. One flip decides it.",
-    payout: "Win: 1.96× your stake",
+    name: "Roulette",
+    tag: "European wheel, 0 to 36",
+    how: "Bet Tickets on one number, red or black, odd or even, 1-18 or 19-36. The wheel spins on chain in one transaction.",
+    payout: "One number: 36× · Red, black, odd, even, 1-18, 19-36: 2×",
+    risk: "High",
+    address: deployment.casino.TicketRoulette.address,
+    calls: "spin(bet, pick, tickets)",
+  },
+  {
+    name: "Blackjack",
+    tag: "Beat the dealer to 21",
+    how: "Bet Tickets and get 2 cards. Hit to take more cards, or stand. The dealer draws to 17. The higher total without going over 21 wins.",
+    payout: "Blackjack: 2.5× · Win: 2× · Tie: stake back",
     risk: "Medium",
-  },
-  {
-    name: "Hex Dice",
-    tag: "Pick 1 of 6",
-    how: "Pick a number from 1 to 6. The dice rolls on chain. A match pays big.",
-    payout: "Win: 5.8× your stake",
-    risk: "High",
-  },
-  {
-    name: "Rocket",
-    tag: "Cash out in time",
-    how: "The multiplier climbs from 1× until the rocket crashes. Cash out before it does.",
-    payout: "Win: your stake × the multiplier when you cash out",
-    risk: "High",
-  },
-  {
-    name: "Minefield",
-    tag: "Step by step",
-    how: "Open tiles on a 5×5 grid. Each safe tile raises your multiplier. One mine ends the run.",
-    payout: "Win: up to 24× your stake",
-    risk: "High",
-  },
-  {
-    name: "Ticket Wheel",
-    tag: "Spin to win",
-    how: "Spin a wheel with 1×, 2×, 5× and 0× slices. Most slices are small. A few are big.",
-    payout: "Win: 1× to 20× your stake",
-    risk: "Medium",
-  },
-  {
-    name: "All-In Pot",
-    tag: "Winner takes all",
-    how: "Players add Tickets to one pot. One player wins it all. More Tickets in the pot give better odds.",
-    payout: "Win: the whole pot",
-    risk: "All in",
+    address: deployment.casino.TicketBlackjack.address,
+    calls: "deal(tickets) · hit() · stand()",
   },
 ];
 
@@ -85,7 +66,7 @@ export default function CasinoPage() {
 
         <section className="mt-10 text-center">
           <span className="rounded-full border border-accent/60 bg-accent/10 px-3 py-1 text-xs text-accent-strong">
-            Coming soon
+            Contracts live on Monad Testnet
           </span>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-5xl">
             Ticket Boosters
@@ -96,7 +77,7 @@ export default function CasinoPage() {
           </p>
         </section>
 
-        <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="mt-8 grid gap-3 sm:grid-cols-2">
           {GAMES.map((g) => (
             <article key={g.name} className="card flex flex-col">
               <div className="flex items-start justify-between gap-2">
@@ -110,8 +91,16 @@ export default function CasinoPage() {
               </div>
               <p className="mt-3 flex-1 text-sm text-muted">{g.how}</p>
               <p className="mt-3 font-mono text-sm">{g.payout}</p>
+              <p className="mt-3 text-xs text-muted">
+                Live contract:{" "}
+                <a className="font-mono text-accent-strong hover:underline" href={addressUrl(g.address)} target="_blank" rel="noreferrer">
+                  {g.address.slice(0, 6)}…{g.address.slice(-4)} ↗
+                </a>
+                <br />
+                Calls: <span className="font-mono">{g.calls}</span>
+              </p>
               <button className="btn-secondary mt-4 w-full" disabled>
-                Coming soon
+                Play screen coming soon
               </button>
             </article>
           ))}
@@ -137,7 +126,7 @@ export default function CasinoPage() {
         </section>
 
         <p className="mt-8 text-center text-xs text-muted">
-          Planned boosters. Payouts and odds can change before launch. Testnet demo only.
+          The contracts are live and verified on Monad Testnet. The play screens are not built yet. Testnet demo only.
         </p>
       </div>
     </main>

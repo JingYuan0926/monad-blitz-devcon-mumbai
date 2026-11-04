@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local Claude Code settings
 .claude/settings.local.json
+
+# dependencies in every folder (root and contracts/)
+node_modules/
