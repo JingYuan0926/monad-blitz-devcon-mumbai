@@ -33,8 +33,8 @@ Your savings never play. Games spend and pay only Tickets, so a loss costs Ticke
 | Item | Link |
 | --- | --- |
 | Post on X / LinkedIn (tags @monad, @monad_dev, @geeky_kartikey) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
-| Demo video (30 s+, product running) | _add link_ |
-
+| Demo video (30 s+, product running) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
+| Product ad video | <https://x.com/ilovetofupeach/status/2117930357781942726> |
 
 ### Bonus
 
