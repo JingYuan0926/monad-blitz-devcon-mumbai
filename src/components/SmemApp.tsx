@@ -590,7 +590,9 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
                       : won
                       ? "bg-win text-background"
                       : picked && !showResult
-                        ? "bg-accent text-foreground"
+                        ? "bg-accent text-white"
+                        : planned > 0n && !settled
+                          ? "bg-accent/35 text-foreground"
                         : lost
                           ? "bg-surface-2 text-muted opacity-50"
                           : "bg-surface-2 text-muted hover:bg-border",
@@ -601,7 +603,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
                     <span className="font-mono text-[11px] font-normal opacity-90">{onHex.toLocaleString()} Tickets</span>
                     {mine > 0n && <span className="font-mono text-[10px] font-normal">you {mine.toLocaleString()}</span>}
                     {!settled && planned > 0n && (
-                      <span className="font-mono text-[10px] font-semibold">+{planned.toLocaleString()} yours</span>
+                      <span className="font-mono text-[11px] font-semibold">✓ +{planned.toLocaleString()} yours</span>
                     )}
                   </span>
                 </button>
@@ -619,7 +621,8 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
           ) : !settled ? (
             <>
               <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
-                Tickets on hex {tile} · tap a hex to switch · you have {ready ? wholeTickets.toLocaleString() : "—"}
+                Tickets for hex {tile} · tap another hex to add it too · you have{" "}
+                {ready ? wholeTickets.toLocaleString() : "—"}
               </label>
               <div className="mt-2 flex gap-2">
                 <input
@@ -640,26 +643,53 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
                   </button>
                 ))}
               </div>
-              <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                <span>
-                  Your plan: {planTotal.toLocaleString()} Ticket{planTotal === 1n ? "" : "s"} on {planHexes} hex
-                  {planHexes === 1 ? "" : "es"}
-                  {planHexes > 0 &&
-                    ` (${planTickets
-                      .map((v, i) => (v > 0n ? `hex ${i + 1}: ${v}` : ""))
-                      .filter(Boolean)
-                      .join(", ")})`}
-                </span>
-                {planTotal > 0n && (
-                  <button className="underline hover:text-foreground" onClick={() => setPlan(["", "", "", "", "", ""])}>
-                    Clear
-                  </button>
+              {/* Selected hexes: each one stays until you remove it */}
+              <div className="mt-4">
+                <div className="flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.14em] text-muted">
+                  <span>
+                    Your selection · {planHexes} hex{planHexes === 1 ? "" : "es"} · {planTotal.toLocaleString()} Ticket
+                    {planTotal === 1n ? "" : "s"}
+                  </span>
+                  {planTotal > 0n && (
+                    <button className="underline hover:text-foreground" onClick={() => setPlan(["", "", "", "", "", ""])}>
+                      Clear all
+                    </button>
+                  )}
+                </div>
+                {planHexes === 0 ? (
+                  <p className="mt-2 text-sm text-muted">Tap a hex and enter Tickets. You can pick several hexes.</p>
+                ) : (
+                  <ul className="mt-2 flex flex-wrap gap-2">
+                    {planTickets.map((v, i) =>
+                      v > 0n ? (
+                        <li
+                          key={i}
+                          className={`flex items-center border text-sm ${tile === i + 1 ? "border-accent bg-accent/10" : "border-border"}`}
+                        >
+                          <button className="px-3 py-1.5" onClick={() => setTile(i + 1)} title="Edit this hex">
+                            Hex {i + 1} · <span className="font-mono">{v.toLocaleString()}</span> Ticket{v === 1n ? "" : "s"}
+                          </button>
+                          <button
+                            className="border-l border-border px-2 py-1.5 text-muted hover:text-lose"
+                            onClick={() => setPlanFor(i + 1, "")}
+                            aria-label={`Remove hex ${i + 1}`}
+                            title="Remove"
+                          >
+                            ✕
+                          </button>
+                        </li>
+                      ) : null,
+                    )}
+                  </ul>
+                )}
+                {Number(planTotal) > wholeTickets && (
+                  <p className="mt-2 text-sm text-lose">That is more Tickets than you have ({wholeTickets.toLocaleString()}).</p>
                 )}
               </div>
               <button className="btn-primary mt-3 w-full" onClick={onPlay} disabled={!ready || !!busy || planTotal === 0n}>
                 {planTotal > 0n
-                  ? `Lock in ${planTotal.toLocaleString()} Ticket${planTotal === 1n ? "" : "s"} & draw`
-                  : "Put Tickets on a hex to lock in"}
+                  ? `Submit stake · ${planTotal.toLocaleString()} Ticket${planTotal === 1n ? "" : "s"} on ${planHexes} hex${planHexes === 1 ? "" : "es"} & draw`
+                  : "Select a hex to stake"}
               </button>
               <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-muted">
                 <input
