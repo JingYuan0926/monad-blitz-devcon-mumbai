@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { BoostersPlay } from "@/components/BoostersPlay";
+
 export const metadata: Metadata = {
   title: "Ticket Boosters — Morney",
   description: "Ways to earn more Tickets. Win more Tickets or lose the Tickets you put in. Your savings never move.",
@@ -99,12 +101,12 @@ export default function CasinoPage() {
                 <br />
                 Calls: <span className="font-mono">{g.calls}</span>
               </p>
-              <button className="btn-secondary mt-4 w-full" disabled>
-                Play screen coming soon
-              </button>
+
             </article>
           ))}
         </section>
+
+        <BoostersPlay />
 
         <section className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-border bg-surface p-4">
@@ -126,7 +128,7 @@ export default function CasinoPage() {
         </section>
 
         <p className="mt-8 text-center text-xs text-muted">
-          The contracts are live and verified on Monad Testnet. The play screens are not built yet. Testnet demo only.
+          The contracts are live and verified on Monad Testnet. Demo randomness. Testnet demo only.
         </p>
       </div>
     </main>
