@@ -54,7 +54,38 @@ describe("Ticket casino", async function () {
     }
   });
 
-  it("blackjack deals, finishes, and pays by the result", async function () {
+  it("spinMany settles several bets on one spin", async function () {
+    const { vault, roulette } = await setup();
+    const publicClient = await viem.getPublicClient();
+    const me = alice.account.address;
+    const bit = (n: number) => 1n << BigInt(n);
+    const red = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36].reduce((m, n) => m | bit(n), 0n);
+    const split = bit(8) | bit(11);
+    for (let i = 0; i < 8; i++) {
+      const before = await vault.read.ticketsOf([me]);
+      // 3 bets: 5 on red (2x), 2 on the split 8-11 (18x), 1 on number 0 (36x).
+      const hash = await roulette.write.spinMany([[red, split, bit(0)], [5n, 2n, 1n]], { account: alice.account });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const [log] = await roulette.getEvents.SpunMany({}, { blockHash: receipt.blockHash });
+      const r = log.args.result!;
+      let expected = 0n;
+      if ((red >> BigInt(r)) & 1n) expected += 5n * 2n;
+      if ((split >> BigInt(r)) & 1n) expected += 2n * 18n;
+      if (r === 0) expected += 36n;
+      assert.equal(log.args.ticketsStaked, 8n);
+      assert.equal(log.args.ticketsWon, expected * TICKET);
+      const delta = (await vault.read.ticketsOf([me])) - before + 8n * TICKET - expected * TICKET;
+      assert.ok(delta === 0n || delta === 1000n * TICKET, `delta ${delta}`);
+    }
+    // A mask that does not divide 36 (5 numbers) is refused.
+    await viem.assertions.revertWithCustomError(
+      roulette.write.spinMany([[0b111110n], [1n]], { account: alice.account }),
+      roulette,
+      "InvalidBet",
+    );
+  });
+
+    it("blackjack deals, finishes, and pays by the result", async function () {
     const { vault, blackjack } = await setup();
     const publicClient = await viem.getPublicClient();
     const me = alice.account.address;

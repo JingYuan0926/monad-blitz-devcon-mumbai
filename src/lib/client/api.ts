@@ -15,7 +15,7 @@ import {
 import { getMetaMask } from "@/lib/metamask";
 import { activeChain as monad, deployment } from "@/lib/network";
 import type { Action, Card, HandResult, PublicBlackjackState, Rank, Suit } from "@/lib/game/blackjack";
-import { colorOf, PAYOUTS, type PocketColor, type RouletteBet, type SettledBet } from "@/lib/game/roulette";
+import { colorOf, coveredNumbers, PAYOUTS, type PocketColor, type RouletteBet, type SettledBet } from "@/lib/game/roulette";
 
 export type PlayerSummary = {
   tickets: number;
@@ -48,8 +48,8 @@ const vaultAbi = parseAbi([
   "function dayEndsAt() view returns (uint256)",
 ]);
 const rouletteAbi = parseAbi([
-  "function spin(uint8 bet, uint8 pick, uint256 tickets) returns (uint8 result, uint256 ticketsWon)",
-  "event Spun(address indexed player, uint8 bet, uint8 pick, uint256 tickets, uint8 result, uint256 ticketsWon)",
+  "function spinMany(uint64[] masks, uint256[] tickets) returns (uint8 result, uint256 ticketsWon)",
+  "event SpunMany(address indexed player, uint8 result, uint256 ticketsStaked, uint256 ticketsWon)",
 ]);
 const blackjackAbi = parseAbi([
   "function deal(uint256 tickets)",
@@ -64,16 +64,6 @@ const BLACKJACK = deployment.casino.TicketBlackjack.address as Address;
 
 const publicClient = createPublicClient({ chain: monad, transport: http() });
 
-// Roulette bet kinds that the contract supports, mapped to its bet codes.
-const BET_CODE: Partial<Record<RouletteBet["kind"], number>> = {
-  straight: 0,
-  red: 1,
-  black: 2,
-  odd: 3,
-  even: 4,
-  low: 5,
-  high: 6,
-};
 
 const history: number[] = [];
 
@@ -206,36 +196,43 @@ export const api = {
   },
 
   async spin(bets: RouletteBet[]): Promise<SpinResponse> {
-    if (bets.length !== 1) throw new Error("On chain, place one bet per spin.");
-    const [bet] = bets;
-    const code = BET_CODE[bet.kind];
-    if (code === undefined) {
-      throw new Error("On chain, use one number, red, black, odd, even, 1-18 or 19-36.");
+    if (bets.length === 0) throw new Error("Place a bet first.");
+    // Every bet becomes the set of numbers it covers, as a bit mask. One spin settles them all.
+    const masks: bigint[] = [];
+    for (const bet of bets) {
+      const nums = coveredNumbers(bet);
+      if (!nums || nums.length === 0) throw new Error("One of the bets is not valid.");
+      masks.push(nums.reduce((m, n) => m | (1n << BigInt(n)), 0n));
     }
+    const amounts = bets.map((b) => BigInt(b.amount));
     const { client, account } = await wallet();
     const receipt = await send(
       client.writeContract({
         account,
         address: ROULETTE,
         abi: rouletteAbi,
-        functionName: "spin",
-        args: [code, code === 0 ? bet.target[0] : 0, BigInt(bet.amount)],
+        functionName: "spinMany",
+        args: [masks, amounts],
         gas: 500_000n,
       }),
     );
-    const [log] = parseEventLogs({ abi: rouletteAbi, logs: receipt.logs, eventName: "Spun" });
+    const [log] = parseEventLogs({ abi: rouletteAbi, logs: receipt.logs, eventName: "SpunMany" });
     const number = log.args.result;
     const returned = Math.round(Number(formatUnits(log.args.ticketsWon, 18)));
-    const won = returned > 0;
+    const totalStaked = bets.reduce((sum, b) => sum + b.amount, 0);
     history.unshift(number);
+    const settled: SettledBet[] = bets.map((bet, i) => {
+      const won = ((masks[i] >> BigInt(number)) & 1n) === 1n;
+      return { ...bet, won, winnings: won ? bet.amount * PAYOUTS[bet.kind] : 0 };
+    });
     return {
       player: await player(account),
       history: [...history],
       result: { number, color: colorOf(number) },
-      bets: [{ ...bet, won, winnings: won ? bet.amount * PAYOUTS[bet.kind] : 0 }],
-      totalStaked: bet.amount,
+      bets: settled,
+      totalStaked,
       ticketsReturned: returned,
-      pointsWon: won ? returned - bet.amount : 0,
+      pointsWon: Math.max(0, returned - totalStaked),
     };
   },
 

@@ -27,6 +27,7 @@ contract TicketRoulette {
     uint256 public spins;
 
     event Spun(address indexed player, uint8 bet, uint8 pick, uint256 tickets, uint8 result, uint256 ticketsWon);
+    event SpunMany(address indexed player, uint8 result, uint256 ticketsStaked, uint256 ticketsWon);
 
     error InvalidBet();
     error ZeroStake();
@@ -56,6 +57,46 @@ contract TicketRoulette {
             vault.creditTickets(msg.sender, ticketsWon);
         }
         emit Spun(msg.sender, bet, pick, tickets, result, ticketsWon);
+    }
+
+    /// @notice Settles many bets on one spin. Each bet is the set of numbers it covers, as a bit mask
+    ///         (bit n = number n, 0 to 36), plus whole Tickets. A win pays 36 / (numbers covered) times the bet,
+    ///         including the stake: 1 number 36x, split 18x, street 12x, corner 9x, line 6x, dozen or column 3x,
+    ///         red, black, odd, even, 1-18 or 19-36 2x.
+    function spinMany(uint64[] calldata masks, uint256[] calldata tickets)
+        external
+        returns (uint8 result, uint256 ticketsWon)
+    {
+        if (masks.length == 0 || masks.length != tickets.length || masks.length > 40) revert InvalidBet();
+        if (msg.sender != tx.origin) revert OnlyEOA();
+
+        uint256 total;
+        uint256[] memory multipliers = new uint256[](masks.length);
+        for (uint256 i = 0; i < masks.length; i++) {
+            if (tickets[i] == 0) revert ZeroStake();
+            uint256 covered = _count(masks[i]);
+            if (covered == 0 || masks[i] >> 37 != 0 || 36 % covered != 0 || covered > 18) revert InvalidBet();
+            multipliers[i] = 36 / covered;
+            total += tickets[i];
+        }
+
+        vault.spendTickets(msg.sender, total * ticketUnit);
+
+        result = uint8(
+            uint256(keccak256(abi.encode(block.prevrandao, blockhash(block.number - 1), msg.sender, spins++))) % 37
+        );
+        for (uint256 i = 0; i < masks.length; i++) {
+            if ((masks[i] >> result) & 1 == 1) ticketsWon += tickets[i] * ticketUnit * multipliers[i];
+        }
+        if (ticketsWon > 0) vault.creditTickets(msg.sender, ticketsWon);
+        emit SpunMany(msg.sender, result, total, ticketsWon);
+    }
+
+    function _count(uint64 mask) internal pure returns (uint256 n) {
+        while (mask != 0) {
+            n += mask & 1;
+            mask >>= 1;
+        }
     }
 
     /// @notice How many times the bet is paid back, including the stake. 0 means the bet loses.
