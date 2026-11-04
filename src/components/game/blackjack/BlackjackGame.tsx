@@ -20,8 +20,6 @@ const RESULT_COPY: Record<HandResult, { label: string; tone: string }> = {
 const ACTIONS: { action: Action; label: string; key: string }[] = [
   { action: "hit", label: "Hit", key: "h" },
   { action: "stand", label: "Stand", key: "s" },
-  { action: "double", label: "Double", key: "d" },
-  { action: "split", label: "Split", key: "p" },
 ];
 
 export function BlackjackGame() {
@@ -152,7 +150,7 @@ export function BlackjackGame() {
               ))}
             </div>
             <span className="absolute right-0 top-0 hidden font-mono text-[10px] uppercase tracking-[0.18em] text-white/40 sm:block">
-              Shoe · {game?.shoeRemaining || 312} cards
+              Cards drawn on chain
             </span>
           </div>
 
@@ -213,9 +211,7 @@ export function BlackjackGame() {
                     );
                   })}
                 </div>
-                <p className="mt-3 text-xs text-muted">
-                  Double and split each put up another {game?.hands[game.active]?.bet ?? 0} Tickets.
-                </p>
+                <p className="mt-3 text-xs text-muted">Hit to take a card. Stand to let the dealer play.</p>
               </>
             ) : (
               <>
@@ -264,10 +260,10 @@ export function BlackjackGame() {
           <div className="border border-line bg-background p-5 text-sm leading-relaxed text-muted">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-foreground">House rules</p>
             <ul className="mt-3 space-y-1.5">
-              <li>Blackjack pays 3:2 · wins pay 1:1</li>
-              <li>Dealer peeks for blackjack and stands on all 17s</li>
-              <li>Double on any first two cards · split once</li>
-              <li>Split Aces receive one card each</li>
+              <li>Blackjack pays 3:2 · wins pay 1:1 · a tie returns your Tickets</li>
+              <li>Dealer draws to 17 and stands on all 17s</li>
+              <li>Hit or stand · every action is a transaction on Monad</li>
+              <li>Cards come from an endless deck, drawn on chain</li>
             </ul>
           </div>
         </aside>

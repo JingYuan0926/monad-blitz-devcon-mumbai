@@ -67,6 +67,11 @@ const publicClient = createPublicClient({ chain: monad, transport: http() });
 
 const history: number[] = [];
 
+/// The chain's next nonce for the account. MetaMask can keep a stale count, which fails with "nonce too low".
+async function nonceFor(account: Address) {
+  return publicClient.getTransactionCount({ address: account, blockTag: "pending" });
+}
+
 async function wallet() {
   const eth = (await getMetaMask()) as EIP1193Provider | undefined;
   if (!eth) throw new Error("Install MetaMask to play on Monad.");
@@ -209,6 +214,7 @@ export const api = {
     const receipt = await send(
       client.writeContract({
         account,
+        nonce: await nonceFor(account),
         address: ROULETTE,
         abi: rouletteAbi,
         functionName: "spinMany",
@@ -247,6 +253,7 @@ export const api = {
     await send(
       client.writeContract({
         account,
+        nonce: await nonceFor(account),
         address: BLACKJACK,
         abi: blackjackAbi,
         functionName: "deal",
@@ -261,7 +268,14 @@ export const api = {
     if (action !== "hit" && action !== "stand") throw new Error("On chain, Blackjack supports Hit and Stand.");
     const { client, account } = await wallet();
     await send(
-      client.writeContract({ account, address: BLACKJACK, abi: blackjackAbi, functionName: action, gas: 900_000n }),
+      client.writeContract({
+        account,
+        nonce: await nonceFor(account),
+        address: BLACKJACK,
+        abi: blackjackAbi,
+        functionName: action,
+        gas: 900_000n,
+      }),
     );
     return blackjackView(account);
   },
