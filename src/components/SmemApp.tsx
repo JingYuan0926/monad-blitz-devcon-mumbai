@@ -1,6 +1,7 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatUnits, maxUint256, parseUnits, type Hash } from "viem";
 import {
@@ -275,8 +276,21 @@ export function SmemApp() {
     }
   }
 
-  const onNextDay = () =>
-    run("nextDay", () => write.mutateAsync({ ...hexGame, functionName: "nextDay", gas: 800_000n }));
+  // The server opens the next day, so the player does not sign anything.
+  async function onNextDay() {
+    setBusy("nextDay");
+    setError(null);
+    try {
+      const res = await fetch("/api/next-day", { method: "POST" });
+      const body = (await res.json()) as { error?: string };
+      if (!res.ok) throw new Error(body.error ?? "The next day did not open.");
+      await Promise.all([reads.refetch(), lastReads.refetch()]);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(null);
+    }
+  }
 
   const usdcText = (v: bigint) => fmt(Number(formatUnits(v, USDC_DECIMALS)));
   const roundTotals = current?.[1] ?? ZERO_STAKES;
@@ -305,6 +319,12 @@ export function SmemApp() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href="/casino"
+            className="rounded-full border border-accent/60 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/10"
+          >
+            Ticket Boosters
+          </Link>
           <span className="hidden rounded-full border border-border px-3 py-1 text-xs text-muted sm:inline">
             Monad Testnet
           </span>

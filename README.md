@@ -41,15 +41,32 @@ The game can spend Tickets and pay out the yield pool. It cannot touch anyone's 
 
 ### Play games with your Tickets
 
-Your savings earn Tickets. Use your Tickets to play games, including casino games. Winners share the yield that everyone's savings earn.
+Your savings earn Tickets. Use your Tickets in games and boosters. Winners share the yield that everyone's savings earn.
 
 | Game | Type | Status |
 | --- | --- | --- |
-| Hex Yield Draw | Casino: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
-| More casino games, such as dice, roulette and slots | Casino | Planned |
+| Hex Yield Draw | Draw: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
+| Ticket Boosters: Coin Flip, Hex Dice, Rocket, Minefield, Ticket Wheel, All-In Pot | Earn more Tickets | Planned. See <https://morney.fun/casino> |
 | Daily prediction challenges | Prediction | Planned |
 
-Every game uses the same Tickets. A loss costs only Tickets, never your savings.
+Every game uses the same Tickets.
+
+### More ways to earn Tickets (planned)
+
+Savings are the main way to earn Tickets. **Ticket Boosters** are a second way: short games where you put Tickets in to try to multiply them. You can come out with more Tickets, or lose the Tickets you put in. Your saved USDC never moves. Extra Tickets give you a bigger share in the Hex Yield Draw, where Tickets win real USDC yield.
+
+The [Ticket Boosters page](https://morney.fun/casino) shows the plan.
+
+| Booster | How it works | Tickets you can earn | Risk |
+| --- | --- | --- | --- |
+| Coin Flip | Pick heads or tails. One flip decides it. | 1.96× your stake | Medium |
+| Hex Dice | Pick a number from 1 to 6. A match pays. | 5.8× your stake | High |
+| Rocket | The multiplier climbs until the rocket crashes. Cash out before it does. | Stake × multiplier at cash-out | High |
+| Minefield | Open tiles on a 5×5 grid. Each safe tile raises the multiplier. One mine ends the run. | Up to 24× your stake | High |
+| Ticket Wheel | Spin a wheel with 0×, 1×, 2×, 5× and 20× slices. | 1× to 20× your stake | Medium |
+| All-In Pot | Players add Tickets to one pot. One player wins it all. More Tickets give better odds. | The whole pot | All in |
+
+These boosters are not built yet. The page shows the plan only. A loss costs only Tickets, never your savings.
 
 The vault contract is named `SmemVault` because we deployed it before the project rename. The contract name does not change how it works.
 
