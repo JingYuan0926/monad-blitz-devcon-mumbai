@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Wordmark } from "@/components/Logo";
+import { SiteHeader } from "@/components/game/SiteHeader";
 import { ArrowUpRight } from "@/components/Navbar";
 import { TicketChip } from "@/components/game/TicketChip";
 
@@ -29,12 +29,8 @@ const GAMES = [
 export default function PlayPage() {
   return (
     <div className="flex min-h-svh flex-col bg-surface">
-      <header className="border-b border-line bg-background">
-        <div className="mx-auto flex h-16 max-w-[1400px] items-center px-4 sm:px-6">
-          <Link href="/" aria-label="Morney home">
-            <Wordmark />
-          </Link>
-        </div>
+      <header className="sticky top-0 z-40 border-b border-line bg-background/85 backdrop-blur-xl">
+        <SiteHeader />
       </header>
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-16 sm:px-6">

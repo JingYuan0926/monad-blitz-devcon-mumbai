@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSyncExternalStore } from "react";
-import { Wordmark } from "@/components/Logo";
+import { SiteHeader } from "@/components/game/SiteHeader";
 import type { PlayerSummary } from "@/lib/client/api";
 
 const GAMES = [
@@ -43,11 +43,9 @@ export function GameShell({ player, displayTickets, children }: GameShellProps) 
   return (
     <div className="flex min-h-svh flex-col bg-surface">
       <header className="sticky top-0 z-40 border-b border-line bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-4 px-4 sm:px-6">
+        <SiteHeader />
+        <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between gap-4 border-t border-line px-4 sm:px-6">
           <div className="flex items-center gap-6">
-            <Link href="/" aria-label="Morney home">
-              <Wordmark />
-            </Link>
             <nav className="hidden items-center gap-1 font-mono text-[13px] uppercase tracking-[0.08em] sm:flex">
               {GAMES.map((g) => (
                 <Link
