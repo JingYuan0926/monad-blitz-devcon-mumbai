@@ -312,6 +312,8 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   const roundTotals = current?.[1] ?? ZERO_STAKES;
   const roundTickets = roundTotals.reduce((a, b) => a + b, 0n);
   const roundPool = current?.[2] ?? 0n;
+  // What the winning hex shares: the day's yield after the platform fee (FEE_BPS = 500 in HexGame).
+  const prizePool = (roundPool * 9_500n) / 10_000n;
   const revealing = busy === "play" || now < revealUntil;
   const revealSeconds = Math.max(0, Math.ceil((revealUntil - now) / 1000));
   const showResult = settled && !revealing;
@@ -528,13 +530,13 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Put Tickets on one or more hexes, then lock in. Five seconds later, one hex wins today&apos;s yield. Everyone on it splits 95% by their share
-            of the hex. Morney keeps 5%.
+            Put Tickets on one or more hexes, then lock in. Five seconds later, one hex wins today&apos;s prize pool.
+            Everyone on it splits the pool by their share of the hex.
           </p>
 
           <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 border border-accent/30 bg-accent/5 px-4 py-4">
-            <span className="text-sm text-muted">Today&apos;s total yield (estimate)</span>
-            <span className="font-display text-2xl font-medium tabular-nums text-accent">{usdcText(roundPool)} USDC</span>
+            <span className="text-sm text-muted">Today&apos;s prize pool (estimate)</span>
+            <span className="font-display text-2xl font-medium tabular-nums text-accent">{usdcText(prizePool)} USDC</span>
           </div>
 
           <div className="mt-4 grid grid-cols-3 justify-items-center gap-x-2 gap-y-3">
@@ -644,7 +646,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             <div aria-live="polite" className="mt-4 border border-border px-4 py-3 text-sm">
               <div>
                 Hex <span className="font-semibold">{winningHex}</span> won today&apos;s{" "}
-                <span className="font-mono">{usdcText(roundPool)} USDC</span>
+                <span className="font-mono">{usdcText(prizePool)} USDC</span>
                 {current?.[5] ? " (demo: forced)" : ""}.
               </div>
               {myOnWinner > 0n ? (

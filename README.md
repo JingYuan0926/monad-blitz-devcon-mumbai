@@ -4,7 +4,7 @@
 
 **Save more. Play more. Compete for daily rewards.**
 
-Morney is a gamified savings app on Monad. You deposit USDC, and your savings earn **Tickets** every day. You stake Tickets on the **Hex Yield Draw**: one of 6 hexes wins the day's yield, and everyone on that hex splits 95% of it by their share of the hex. You can also try to multiply your Tickets in two **Ticket Boosters**, Roulette and Blackjack.
+
 
 Your savings never play. Games spend and pay only Tickets, so a loss costs Tickets, never your deposit.
 
@@ -34,8 +34,7 @@ Your savings never play. Games spend and pay only Tickets, so a loss costs Ticke
 | --- | --- |
 | Post on X / LinkedIn (tags @monad, @monad_dev, @geeky_kartikey) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
 | Demo video (30 s+, product running) | _add link_ |
-| Product ad video | _add link_ |
-| Combined views at 5:45 PM IST | _add number_ |
+
 
 ### Bonus
 
