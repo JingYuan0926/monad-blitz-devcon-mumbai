@@ -20,7 +20,7 @@ describe("Smem", async function () {
   }
 
   async function setup() {
-    const usdc = await viem.deployContract("MockUSDC");
+    const usdc = await viem.deployContract("MockUSDC", ["USDC", "USDC"]);
     // 1 Ticket per 1 USDC per day.
     const vault = await viem.deployContract("SmemVault", [usdc.address, 6, TICKET, DAY, owner.account.address]);
     // Yield pool per round: 1 to 10 USDC. Fee goes to the owner.

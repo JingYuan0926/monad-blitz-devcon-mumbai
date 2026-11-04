@@ -13,7 +13,7 @@ const deployment = JSON.parse(
 );
 
 const targets: Array<[string, unknown[]]> = [
-  ["MockUSDC", []],
+  ["MockUSDC", deployment.constructorArgs.MockUSDC ?? ["USDC", "USDC"]],
   ["SmemVault", deployment.constructorArgs.SmemVault],
   ["HexGame", deployment.constructorArgs.HexGame],
 ];

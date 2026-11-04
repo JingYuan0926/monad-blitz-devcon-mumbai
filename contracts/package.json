@@ -11,9 +11,10 @@
     "smoke": "hardhat run scripts/smoke.ts --network monadTestnet",
     "send-usdc": "hardhat run scripts/send-usdc.ts --network monadTestnet",
     "deploy-casino": "hardhat run scripts/deploy-casino.ts --network monadTestnet",
-    "deploy:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json SKIP_RESERVE=1 DAY_LENGTH_SECONDS=86400 USDC_ADDRESS=0x754704Bc059F8C67012fEd69BC8A327a5aafb603 hardhat run scripts/deploy.ts --network monadMainnet",
+    "deploy:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json USDC_NAME='Morney Demo USD' USDC_SYMBOL=mUSD hardhat run scripts/deploy.ts --network monadMainnet",
     "deploy-casino:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json hardhat run scripts/deploy-casino.ts --network monadMainnet",
-    "verify:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json hardhat run scripts/verify.ts --network monadMainnet"
+    "verify:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json hardhat run scripts/verify.ts --network monadMainnet",
+    "send-usdc:mainnet": "DEPLOYMENT_FILE=deployments/mainnet.json hardhat run scripts/send-usdc.ts --network monadMainnet"
   },
   "keywords": [],
   "type": "module",

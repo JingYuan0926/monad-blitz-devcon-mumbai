@@ -12,7 +12,9 @@ if (!isAddress(to)) throw new Error("Set TO to a valid address, for example TO=0
 const amount = parseUnits(process.env.AMOUNT ?? "5000", 6);
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const deployment = JSON.parse(await readFile(path.resolve(here, "../../src/contracts/deployment.json"), "utf8"));
+const deployment = JSON.parse(
+  await readFile(path.resolve(here, "../..", process.env.DEPLOYMENT_FILE ?? "src/contracts/deployment.json"), "utf8"),
+);
 
 const { viem } = await network.create();
 const publicClient = await viem.getPublicClient();

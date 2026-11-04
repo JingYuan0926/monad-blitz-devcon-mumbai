@@ -13,7 +13,8 @@ contract MockUSDC is ERC20 {
 
     error NotOwner();
 
-    constructor() ERC20("USDC", "USDC") {
+    /// @param name_ Token name. Testnet uses "USDC". Mainnet uses a distinct name so it is not mistaken for real USDC.
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {
         owner = msg.sender;
     }
 

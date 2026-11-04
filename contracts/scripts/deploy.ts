@@ -13,6 +13,9 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // DEPLOYMENT_FILE lets a mainnet deploy write its own file, so the testnet app keeps its addresses.
 const outFile = path.resolve(here, "../..", process.env.DEPLOYMENT_FILE ?? "src/contracts/deployment.json");
 
+// Name of a newly deployed mock token. Mainnet uses a distinct name so nobody mistakes it for real USDC.
+const USDC_NAME = process.env.USDC_NAME ?? "USDC";
+const USDC_SYMBOL = process.env.USDC_SYMBOL ?? "USDC";
 // Tickets that 1 USDC earns for 1 full day. 0.01 means 100 USDC earns 1 Ticket per day.
 const TICKETS_PER_USDC_PER_DAY = process.env.TICKETS_PER_USDC_PER_DAY ?? "0.01";
 // The length of one day in seconds. The demo uses 10 seconds. Production uses 86400.
@@ -52,7 +55,7 @@ const startBlock = await publicClient.getBlockNumber();
 
 const usdc = process.env.USDC_ADDRESS
   ? await viem.getContractAt("MockUSDC", getAddress(process.env.USDC_ADDRESS))
-  : await viem.deployContract("MockUSDC");
+  : await viem.deployContract("MockUSDC", [USDC_NAME, USDC_SYMBOL]);
 console.log(`MockUSDC:  ${usdc.address}${process.env.USDC_ADDRESS ? " (kept)" : ""}`);
 
 let vaultArgs: unknown[];
@@ -119,6 +122,7 @@ const deployment = {
   deployer: deployer.account.address,
   dayLengthSeconds: Number(dayLength),
   constructorArgs: {
+    ...(process.env.USDC_ADDRESS ? {} : { MockUSDC: [USDC_NAME, USDC_SYMBOL] }),
     SmemVault: stringify(vaultArgs),
     HexGame: stringify(gameArgs),
   },

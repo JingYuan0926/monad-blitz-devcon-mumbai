@@ -11,7 +11,7 @@ describe("Ticket casino", async function () {
   const [owner, alice] = await viem.getWalletClients();
 
   async function setup() {
-    const usdc = await viem.deployContract("MockUSDC");
+    const usdc = await viem.deployContract("MockUSDC", ["USDC", "USDC"]);
     // 1 Ticket per 1 USDC per day, 10-second days.
     const vault = await viem.deployContract("SmemVault", [usdc.address, 6, TICKET, 10n, owner.account.address]);
     const roulette = await viem.deployContract("TicketRoulette", [vault.address]);
