@@ -4,7 +4,7 @@
 
 **Save more. Play more. Compete for daily rewards.**
 
-
+Morney is a gamified savings app, **deployed on Monad Mainnet**. All 5 contracts are live and verified on mainnet (chain ID 143), and the same contracts run on Monad Testnet for the playable demo. You deposit USDC, and your savings earn **Tickets** every day. You stake Tickets on the **Hex Yield Draw**: one of 6 hexes wins the day's yield, and everyone on that hex splits 95% of it by their share of the hex. You can also try to multiply your Tickets in two **Ticket Boosters**, Roulette and Blackjack.
 
 Your savings never play. Games spend and pay only Tickets, so a loss costs Tickets, never your deposit.
 
@@ -16,8 +16,9 @@ Your savings never play. Games spend and pay only Tickets, so a loss costs Ticke
 | --- | --- |
 | Forked GitHub repo | <https://github.com/JingYuan0926/monad-blitz-devcon-mumbai> |
 | Live public page | <https://morney.fun> (landing) · <https://morney.fun/savings> · <https://morney.fun/draw> · <https://morney.fun/play> |
-| Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x1237eb3b8c735de71370dadc56e7325da5cc3260` · TicketRoulette `0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3` · TicketBlackjack `0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c` · USDC (test) `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
-| Deployment | Contracts on **Monad Testnet** (chain ID 10143). Web app on **Railway** at the custom domain `morney.fun`. |
+| Contract addresses (Monad Mainnet) | SmemVault `0xd1204811989616d1b92efb8730591c67703b4e9c` · HexGame `0xc7d030468a0c95662e067243e81f7bd7c9e6510e` · TicketRoulette `0xc124324af5dcd2ed15aa791c05ec33930157335d` · TicketBlackjack `0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490` · mUSD `0x3ba77514287ff71f9d93ef011b84bf378a35036a`. See [Live on Monad Mainnet](#live-on-monad-mainnet). |
+| Contract addresses (Monad Testnet) | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x1237eb3b8c735de71370dadc56e7325da5cc3260` · TicketRoulette `0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3` · TicketBlackjack `0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c` · USDC (test) `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
+| Deployment | Contracts on **Monad Mainnet** (chain ID 143) and **Monad Testnet** (chain ID 10143). Web app on **Railway** at the custom domain `morney.fun`, connected to Monad Testnet. |
 
 ### Project working
 
@@ -25,7 +26,7 @@ Your savings never play. Games spend and pay only Tickets, so a loss costs Ticke
 | --- | --- |
 | Announced functions | Deposit, withdraw, daily Tickets, Hex Yield Draw (stake on several hexes and draw in one transaction), gasless Next day, Roulette, Blackjack, test USDC faucet. See [What works today](#what-works-today). |
 | Live transaction during the demo | Every deposit, withdraw, lock-in, spin, deal, hit and stand is a Monad Testnet transaction. The pages link each one to the explorer. |
-| Verified contracts | All 5 contracts are verified on Sourcify. See the links in the tables below. |
+| Verified contracts | All 5 contracts are verified on Sourcify on **both mainnet and testnet**. See the links in the tables below. |
 | Run it from this README | See [Run it yourself](#run-it-yourself). The app uses the deployed contracts, so `npm install` and `npm run dev` are enough to play. |
 
 ### Build in public
@@ -33,18 +34,35 @@ Your savings never play. Games spend and pay only Tickets, so a loss costs Ticke
 | Item | Link |
 | --- | --- |
 | Post on X / LinkedIn (tags @monad, @monad_dev, @geeky_kartikey) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
-| Demo video (30 s+, product running) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
-| Product ad video | <https://x.com/ilovetofupeach/status/2117930357781942726> |
+| Demo video (30 s+, product running) | _add link_ |
+| Product ad video | _add link_ |
+| Combined views at 5:45 PM IST | _add number_ |
 
 ### Bonus
 
 | Item | Status |
 | --- | --- |
-| Contracts on Monad Mainnet | Not deployed. The vault is built to call Aave's Pool on Monad Mainnet (`0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef`); testnet uses simulated yield. |
+| Contracts on Monad Mainnet | **Yes.** All 5 contracts are deployed and verified on Monad Mainnet. See [Live on Monad Mainnet](#live-on-monad-mainnet). |
 | Custom domain | Yes: <https://morney.fun> |
 | Pre-market fit | Prize-linked savings already work in traditional finance. Morney adds games and daily draws, so a small saver can win a share of the yield that the whole pool earns. Savings are never staked in the games. |
 | Revenue | Morney keeps **5% of the yield**. At about 4.2% APY on Aave USDC, a $1,000,000 pool earns about $42,000 a year, so Morney earns about $2,100 a year. Revenue grows with total deposits. |
 | Innovation | Tickets turn savings into play credits, so nobody risks their deposit. One shared yield pool is drawn by Tickets (more Tickets, better odds) and split by share on the winning hex. Each draw settles on Monad in about a second. |
+
+## Live on Monad Mainnet
+
+- **Network:** Monad Mainnet (chain ID 143)
+- **Explorer:** <https://monadscan.com>
+- **Addresses file:** `deployments/mainnet.json`
+
+| Contract | Address | Source |
+| --- | --- | --- |
+| SmemVault | [`0xd1204811989616d1b92efb8730591c67703b4e9c`](https://monadscan.com/address/0xd1204811989616d1b92efb8730591c67703b4e9c) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0xd1204811989616d1b92efb8730591c67703b4e9c) |
+| HexGame | [`0xc7d030468a0c95662e067243e81f7bd7c9e6510e`](https://monadscan.com/address/0xc7d030468a0c95662e067243e81f7bd7c9e6510e) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0xc7d030468a0c95662e067243e81f7bd7c9e6510e) |
+| TicketRoulette | [`0xc124324af5dcd2ed15aa791c05ec33930157335d`](https://monadscan.com/address/0xc124324af5dcd2ed15aa791c05ec33930157335d) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0xc124324af5dcd2ed15aa791c05ec33930157335d) |
+| TicketBlackjack | [`0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490`](https://monadscan.com/address/0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490) |
+| MockUSDC (Morney Demo USD, mUSD) | [`0x3ba77514287ff71f9d93ef011b84bf378a35036a`](https://monadscan.com/address/0x3ba77514287ff71f9d93ef011b84bf378a35036a) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0x3ba77514287ff71f9d93ef011b84bf378a35036a) |
+
+The mainnet contracts are the same code as testnet. 1 day = 10 seconds, so the demo moves fast. The token is a demo token named **Morney Demo USD (mUSD)**, so nobody mistakes it for real USDC. The HexGame prize reserve holds 3,000,000 mUSD. The next step for production is to point the vault at real USDC and Aave's Pool on Monad Mainnet (`0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef`).
 
 ## Live on Monad Testnet
 
@@ -129,6 +147,7 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 6. Verify the source: `npm run verify`
 7. Run the full flow on chain: `npm run smoke`
 8. Deploy the Ticket Boosters (Roulette and Blackjack): `npm run deploy-casino`
+9. Deploy everything on Monad Mainnet instead: `npm run deploy:mainnet`, `npm run deploy-casino:mainnet`, then `npm run verify:mainnet`. This writes `deployments/mainnet.json`. The deployer needs real MON for gas.
 
 ## Project layout
 
