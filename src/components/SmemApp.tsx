@@ -46,7 +46,7 @@ function errorText(e: unknown) {
   return text.split("\n")[0].slice(0, 160);
 }
 
-export function SmemApp() {
+export function SmemApp({ view }: { view: "savings" | "draw" }) {
   // False during server render, true in the browser. Wallet state only exists in the browser.
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -332,16 +332,21 @@ export function SmemApp() {
             <Wordmark />
           </Link>
           <div className="hidden items-center gap-8 font-mono text-[13px] uppercase tracking-[0.08em] md:flex">
-            <a href="#savings" className="text-foreground/70 transition-colors hover:text-accent">
+            <Link
+              href="/savings"
+              className={view === "savings" ? "text-accent" : "text-foreground/70 transition-colors hover:text-accent"}
+            >
               Savings
-            </a>
-            <a href="#draw" className="text-foreground/70 transition-colors hover:text-accent">
+            </Link>
+            <Link
+              href="/draw"
+              className={view === "draw" ? "text-accent" : "text-foreground/70 transition-colors hover:text-accent"}
+            >
               Hex Draw
-            </a>
+            </Link>
             <Link href="/play" className="text-foreground/70 transition-colors hover:text-accent">
               Ticket Boosters
             </Link>
-            <span className="text-muted">Monad Testnet</span>
           </div>
           {!mounted ? (
             <span className="w-36" />
@@ -371,15 +376,25 @@ export function SmemApp() {
         <p className="section-label">
           <span className="text-accent">01</span>
           <span className="h-px w-8 bg-accent/40" />
-          Your Morney account
+          {view === "savings" ? "Savings" : "Hex Yield Draw"}
         </p>
         <h2 className="mt-6 font-display text-[clamp(2.2rem,5.6vw,4.5rem)] font-medium uppercase leading-[0.98] tracking-[-0.03em]">
-          <span className="block">Your savings stay safe.</span>
-          <span className="slice-text block pr-[0.1em] italic">Your Tickets play.</span>
+          {view === "savings" ? (
+            <>
+              <span className="block">Your savings stay safe.</span>
+              <span className="slice-text block pr-[0.1em] italic">They earn Tickets every day.</span>
+            </>
+          ) : (
+            <>
+              <span className="block">Your Tickets play.</span>
+              <span className="slice-text block pr-[0.1em] italic">One hex wins today&apos;s yield.</span>
+            </>
+          )}
         </h2>
         <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
-          Deposit USDC. Earn Tickets at the end of every day. Stake Tickets on the hexes to win the daily yield pool. A
-          loss costs Tickets, never your deposit.
+          {view === "savings"
+            ? "Deposit USDC and withdraw it any time. Every 100 USDC you hold for a full day earns 1 Ticket. Take your Tickets to the Hex Yield Draw."
+            : "Put Tickets on one or more hexes and lock in. A hex with more Tickets has better odds. A loss costs Tickets, never your deposit."}
         </p>
       </section>
 
@@ -423,7 +438,9 @@ export function SmemApp() {
       )}
 
       {/* Main */}
-      <section className="mt-6 grid gap-4 md:grid-cols-[1fr_1.3fr]">
+      <section className={`mt-6 grid gap-4 ${view === "savings" ? "md:grid-cols-2" : "mx-auto max-w-3xl"}`}>
+        {view === "savings" && (
+          <>
         {/* Savings */}
         <div id="savings" className="card scroll-mt-20">
           <div className="flex items-center justify-between">
@@ -481,6 +498,20 @@ export function SmemApp() {
           </dl>
         </div>
 
+        <SavingsCharts
+          principal={Number(formatUnits(principal, USDC_DECIMALS))}
+          total={Number(formatUnits(totalPrincipal, USDC_DECIMALS))}
+          wallet={Number(formatUnits(walletUsdc, USDC_DECIMALS))}
+          dayProgress={dayProgress}
+          secondsLeft={secondsLeft}
+          accruing={accruing}
+          perDay={Number(formatUnits(ticketsPerDay, TICKET_DECIMALS))}
+          ready={ready}
+        />
+          </>
+        )}
+        {view === "draw" && (
+        <>
         {/* Game */}
         <div id="draw" className="card scroll-mt-20">
           <div className="flex items-center justify-between">
@@ -637,6 +668,8 @@ export function SmemApp() {
             <Row label="Prize reserve (simulated yield)" value={`${usdcText(prizeReserve)} USDC`} />
           </dl>
         </div>
+        </>
+        )}
       </section>
 
       {/* Status */}
@@ -676,6 +709,83 @@ function safeParse(value: string, decimals: number) {
   } catch {
     return null;
   }
+}
+
+/// A circle chart: a ring filled to `fraction`, with text in the middle.
+function Ring({ fraction, color, children }: { fraction: number; color: string; children: React.ReactNode }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  const f = Math.min(1, Math.max(0, fraction));
+  return (
+    <div className="relative mx-auto h-44 w-44">
+      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+        <circle cx="60" cy="60" r={r} fill="none" stroke="var(--surface-2)" strokeWidth="12" />
+        <circle
+          cx="60"
+          cy="60"
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="12"
+          strokeDasharray={`${c * f} ${c}`}
+          className="transition-[stroke-dasharray] duration-300 ease-out"
+        />
+      </svg>
+      <div className="absolute inset-0 grid place-items-center text-center">{children}</div>
+    </div>
+  );
+}
+
+function SavingsCharts(p: {
+  principal: number;
+  total: number;
+  wallet: number;
+  dayProgress: number;
+  secondsLeft: number;
+  accruing: number;
+  perDay: number;
+  ready: boolean;
+}) {
+  const share = p.total > 0 ? p.principal / p.total : 0;
+  const savedOfAll = p.principal + p.wallet > 0 ? p.principal / (p.principal + p.wallet) : 0;
+  const pct = (v: number) => `${(v * 100).toLocaleString("en-US", { maximumFractionDigits: 1 })}%`;
+  return (
+    <div className="card">
+      <p className="section-label">
+        <span className="text-accent">03</span>
+        <span className="h-px w-6 bg-accent/40" />
+        Overview
+      </p>
+      <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Your savings</h3>
+      <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div>
+          <Ring fraction={p.ready ? savedOfAll : 0} color="var(--accent)">
+            <div>
+              <div className="font-display text-3xl font-medium">{p.ready ? pct(savedOfAll) : "—"}</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">of your USDC saved</div>
+            </div>
+          </Ring>
+          <p className="mt-3 text-center text-xs text-muted">
+            Your share of the vault: {p.ready ? pct(share) : "—"}
+          </p>
+        </div>
+        <div>
+          <Ring fraction={p.dayProgress} color="#12a46b">
+            <div>
+              <div className="font-display text-3xl font-medium">+{p.accruing.toFixed(2)}</div>
+              <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">Tickets in {p.secondsLeft}s</div>
+            </div>
+          </Ring>
+          <p className="mt-3 text-center text-xs text-muted">
+            {p.perDay.toLocaleString("en-US", { maximumFractionDigits: 2 })} Tickets per day
+          </p>
+        </div>
+      </div>
+      <Link href="/draw" className="btn-primary mt-6 block w-full text-center">
+        Use your Tickets in the Hex Yield Draw →
+      </Link>
+    </div>
+  );
 }
 
 function Stat({ label, value, unit, highlight }: { label: string; value: string; unit: string; highlight?: boolean }) {

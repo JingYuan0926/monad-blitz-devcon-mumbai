@@ -1,9 +1,6 @@
-import { SmemApp } from "@/components/SmemApp";
+import { redirect } from "next/navigation";
 
-export default function Home() {
-  return (
-    <main className="flex-1">
-      <SmemApp />
-    </main>
-  );
+// /app is the old address. Savings is the first page now.
+export default function AppPage() {
+  redirect("/savings");
 }

@@ -15,7 +15,7 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | Item | Where |
 | --- | --- |
 | Forked GitHub repo | <https://github.com/JingYuan0926/monad-blitz-devcon-mumbai> |
-| Live public page | <https://morney.fun> (landing) and <https://morney.fun/app> (app) |
+| Live public page | <https://morney.fun> (landing) and <https://morney.fun/savings> and <https://morney.fun/draw> |
 | Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x1237eb3b8c735de71370dadc56e7325da5cc3260` · USDC `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
 | Deployment | Contracts on **Monad Testnet** (chain ID 10143). Web app on **Railway** at the custom domain `morney.fun`. |
 
@@ -49,7 +49,7 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 
 ## Live on Monad Testnet
 
-- **Live app:** <https://morney.fun> (landing page) → <https://morney.fun/app> (savings and Hex Yield Draw) · backup URL: <https://web-production-aabfb.up.railway.app>
+- **Live app:** <https://morney.fun> (landing page) → <https://morney.fun/savings> (savings) and <https://morney.fun/draw> (Hex Yield Draw) · backup URL: <https://web-production-aabfb.up.railway.app>
 - **Network:** Monad Testnet (chain ID 10143)
 
 | Contract | Address | Source |
@@ -111,7 +111,7 @@ You need Node.js 22 or later and MetaMask.
 
 1. Install the packages: `npm install`
 2. Start the app: `npm run dev`
-3. Open <http://localhost:3000> for the landing page, or <http://localhost:3000/app> for the app.
+3. Open <http://localhost:3000> for the landing page, or <http://localhost:3000/savings> for the app.
 4. In MetaMask, get testnet MON for gas from the [Monad Blitz faucet](https://blitz.devnads.com/events/monad-blitz-mumbai-devcon-edition).
 5. In MetaMask, import the test USDC token: `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` (6 decimals).
 6. Click **Get 1,000 USDC**, then deposit.
@@ -136,7 +136,7 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 | Path | What it holds |
 | --- | --- |
 | `src/app/(landing)/` | Landing page at `/` |
-| `src/app/(app)/` | Savings app at `/app` and Ticket Boosters at `/play` (wagmi + viem + MetaMask) |
+| `src/app/(app)/` | Savings at `/savings`, Hex Yield Draw at `/draw` and Ticket Boosters at `/play` (wagmi + viem + MetaMask) |
 | `src/app/api/next-day/` | Server route that opens the next day for the player |
 | `contracts/contracts/` | Solidity contracts |
 | `contracts/test/` | Contract tests |
