@@ -64,7 +64,7 @@ Every rubric item, with proof.
 | TicketBlackjack | [`0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490`](https://monadscan.com/address/0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490) |
 | MockUSDC (Morney Demo USD, mUSD) | [`0x3ba77514287ff71f9d93ef011b84bf378a35036a`](https://monadscan.com/address/0x3ba77514287ff71f9d93ef011b84bf378a35036a) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/143/0x3ba77514287ff71f9d93ef011b84bf378a35036a) |
 
-**The web app at <https://morney.fun> runs on these mainnet contracts by default.** A **Mainnet / Testnet** toggle in the app header switches the whole app (savings, draw, boosters and the gasless Next day) to the testnet contracts. The mainnet contracts are the same code as testnet. 1 day = 10 seconds, so the demo moves fast. The token is a demo token named **Morney Demo USD (mUSD)**, so nobody mistakes it for real USDC. The HexGame prize reserve holds 3,000,000 mUSD. The next step for production is to point the vault at real USDC and Aave's Pool on Monad Mainnet (`0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef`).
+**The web app at <https://morney.fun> runs on these mainnet contracts.** The mainnet contracts are the same code as testnet. 1 day = 10 seconds, so the demo moves fast. The token is a demo token named **Morney Demo USD (mUSD)**, so nobody mistakes it for real USDC. The HexGame prize reserve holds 3,000,000 mUSD. The next step for production is to point the vault at real USDC and Aave's Pool on Monad Mainnet (`0x69a5F9AD4f96ebf0a0C792dD42a01cC5C0102fef`).
 
 ## Live on Monad Testnet
 
@@ -136,7 +136,7 @@ You need Node.js 22 or later and MetaMask.
 5. In MetaMask, import the demo token **mUSD**: `0x3ba77514287ff71f9d93ef011b84bf378a35036a` (6 decimals).
 6. Click **Get 1,000 mUSD**, then deposit.
 
-The app reads the mainnet contracts from `src/contracts/deployment.json` and the testnet contracts from `src/contracts/deployment.testnet.json`. Use the **Mainnet / Testnet** toggle in the header to switch. On testnet, get free MON from the [Monad Blitz faucet](https://blitz.devnads.com/events/monad-blitz-mumbai-devcon-edition) and import the test USDC token `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92`.
+The app reads the mainnet contracts from `src/contracts/deployment.json`. The testnet contracts are kept in `src/contracts/deployment.testnet.json`. To run the app on testnet, change `readNetwork()` in `src/lib/network.ts` to return `"testnet"`.
 
 **Optional: gasless Next day.** The **Next day** button calls a server route that signs the transaction for the player. To use it locally, create `.env.local` with `RELAYER_PRIVATE_KEY=0x...`, a key that holds a little MON. The route only calls `nextDay()`, which anyone can call, so this key cannot move any funds.
 
