@@ -118,7 +118,9 @@ async function player(account: Address): Promise<PlayerSummary> {
 
 async function send(write: Promise<`0x${string}`>) {
   const hash = await write;
-  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 45_000 }).catch(() => {
+    throw new Error(`No confirmation after 45 seconds. Check the transaction on ${monad.blockExplorers.default.url}/tx/${hash}`);
+  });
   if (receipt.status !== "success") throw new Error("The transaction reverted on chain.");
   return receipt;
 }

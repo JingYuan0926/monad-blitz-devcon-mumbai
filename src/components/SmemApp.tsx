@@ -4,7 +4,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { Wordmark } from "@/components/Logo";
-import { NETWORK, setNetwork, TOKEN_SYMBOL } from "@/lib/network";
+import { NETWORK, TOKEN_SYMBOL } from "@/lib/network";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatUnits, maxUint256, parseUnits, type Hash } from "viem";
 import {
@@ -194,7 +194,9 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
     setError(null);
     try {
       const hash = await action();
-      const receipt = await publicClient.waitForTransactionReceipt({ hash });
+      const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 45_000 }).catch(() => {
+        throw new Error(`No confirmation after 45 seconds. Check the transaction: ${txUrl(hash)}`);
+      });
       if (receipt.status !== "success") throw new Error("The transaction reverted on chain.");
       setLastTx({ label, hash });
       await reads.refetch();
@@ -377,17 +379,6 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             </Link>
           </div>
           <div className="flex items-center gap-2">
-          {mounted && (
-            <button
-              className="flex items-center gap-1 border border-foreground/15 p-1 font-mono text-[11px] uppercase tracking-[0.08em]"
-              onClick={() => setNetwork(NETWORK === "mainnet" ? "testnet" : "mainnet")}
-              title="Switch between Monad Mainnet and Monad Testnet"
-              aria-label={`Network: ${NETWORK}. Press to switch.`}
-            >
-              <span className={`px-2 py-1 ${NETWORK === "mainnet" ? "bg-accent text-white" : "text-muted"}`}>Mainnet</span>
-              <span className={`px-2 py-1 ${NETWORK === "testnet" ? "bg-accent text-white" : "text-muted"}`}>Testnet</span>
-            </button>
-          )}
           {!mounted ? (
             <span className="w-36" />
           ) : !isConnected ? (

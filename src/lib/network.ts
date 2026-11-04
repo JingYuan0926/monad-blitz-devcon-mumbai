@@ -8,13 +8,9 @@ export type NetworkName = "mainnet" | "testnet";
 
 const STORAGE_KEY = "morney-network";
 
+// The app is locked to Monad Mainnet for the demo. The testnet contracts stay in deployment.testnet.json.
 function readNetwork(): NetworkName {
-  if (typeof window === "undefined") return "mainnet";
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "testnet" ? "testnet" : "mainnet";
-  } catch {
-    return "mainnet";
-  }
+  return "mainnet";
 }
 
 export const deployments = { mainnet, testnet };

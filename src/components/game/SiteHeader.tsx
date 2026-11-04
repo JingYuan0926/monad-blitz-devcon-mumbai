@@ -7,7 +7,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { Wordmark } from "@/components/Logo";
 import { getMetaMask, type Eth } from "@/lib/metamask";
-import { activeChain, NETWORK, rpcFor, setNetwork } from "@/lib/network";
+import { activeChain, NETWORK, rpcFor } from "@/lib/network";
 
 const NAV = [
   { href: "/savings", label: "Savings" },
@@ -101,16 +101,6 @@ export function SiteHeader() {
         ))}
       </nav>
       <div className="flex items-center gap-2">
-        {mounted && (
-          <button
-            className="flex items-center gap-1 border border-foreground/15 p-1 font-mono text-[11px] uppercase tracking-[0.08em]"
-            onClick={() => setNetwork(NETWORK === "mainnet" ? "testnet" : "mainnet")}
-            title="Switch between Monad Mainnet and Monad Testnet"
-          >
-            <span className={`px-2 py-1 ${NETWORK === "mainnet" ? "bg-primary text-white" : "text-muted"}`}>Mainnet</span>
-            <span className={`px-2 py-1 ${NETWORK === "testnet" ? "bg-primary text-white" : "text-muted"}`}>Testnet</span>
-          </button>
-        )}
         {!mounted ? (
           <span className="w-36" />
         ) : account ? (
