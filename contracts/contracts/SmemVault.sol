@@ -7,9 +7,11 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title SmemVault
-/// @notice Users deposit USDC and earn Tickets over time. Games spend Tickets and award Prize Points.
-/// @dev Games can only change Tickets and Prize Points. No game and no owner can move a user's USDC.
-///      Only the depositor can withdraw their principal.
+/// @notice Users deposit USDC. At the end of each day, the vault gives Tickets for the USDC
+///         that the user held for that whole day. Games spend Tickets and award Prize Points.
+/// @dev The Tickets for one day = the lowest balance during that day x ticketsPerUsdcPerDay.
+///      A deposit starts to earn on the next full day. A withdrawal lowers the current day.
+///      Games can only change Tickets and Prize Points. No game and no owner can move a user's USDC.
 contract SmemVault is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -19,18 +21,29 @@ contract SmemVault is Ownable, ReentrancyGuard {
     IERC20 public immutable usdc;
     uint256 private immutable usdcUnit;
 
-    /// @notice Ticket units that 1 whole USDC earns in 1 hour.
-    uint256 public immutable ticketsPerUsdcPerHour;
+    /// @notice Ticket units that 1 whole USDC earns for 1 full day.
+    uint256 public immutable ticketsPerUsdcPerDay;
+
+    /// @notice The length of one day in seconds. The demo uses 10 seconds. Production uses 86400.
+    uint256 public immutable dayLength;
 
     uint256 public totalPrincipal;
 
-    mapping(address => uint256) public principalOf;
-    mapping(address => uint256) private settledTickets;
-    mapping(address => uint256) public lastAccrualAt;
+    struct Account {
+        uint256 principal;
+        // Tickets already given for days that ended before lastDay.
+        uint256 tickets;
+        // The last day on which the account was updated.
+        uint256 lastDay;
+        // The lowest balance during lastDay. Tickets for lastDay use this amount.
+        uint256 eligible;
+    }
+
+    mapping(address => Account) private accounts;
 
     mapping(address => bool) public isGame;
 
-    /// @notice Prize Points per UTC day. They decide each player's share of that day's prize pool.
+    /// @notice Prize Points per day. They decide each player's share of that day's prize pool.
     mapping(uint256 day => mapping(address => uint256)) public pointsOf;
     mapping(uint256 day => uint256) public totalPointsOf;
     mapping(address => uint256) public lifetimePointsOf;
@@ -38,10 +51,12 @@ contract SmemVault is Ownable, ReentrancyGuard {
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event TicketsSpent(address indexed user, address indexed game, uint256 amount);
+    event TicketsCredited(address indexed user, address indexed game, uint256 amount);
     event PointsAwarded(address indexed user, address indexed game, uint256 indexed day, uint256 points);
     event GameSet(address indexed game, bool allowed);
 
     error ZeroAmount();
+    error ZeroDayLength();
     error InsufficientPrincipal();
     error InsufficientTickets();
     error NotGame();
@@ -51,12 +66,18 @@ contract SmemVault is Ownable, ReentrancyGuard {
         _;
     }
 
-    constructor(IERC20 usdc_, uint8 usdcDecimals_, uint256 ticketsPerUsdcPerHour_, address owner_)
-        Ownable(owner_)
-    {
+    constructor(
+        IERC20 usdc_,
+        uint8 usdcDecimals_,
+        uint256 ticketsPerUsdcPerDay_,
+        uint256 dayLength_,
+        address owner_
+    ) Ownable(owner_) {
+        if (dayLength_ == 0) revert ZeroDayLength();
         usdc = usdc_;
         usdcUnit = 10 ** usdcDecimals_;
-        ticketsPerUsdcPerHour = ticketsPerUsdcPerHour_;
+        ticketsPerUsdcPerDay = ticketsPerUsdcPerDay_;
+        dayLength = dayLength_;
     }
 
     // ---------------------------------------------------------------------
@@ -67,41 +88,72 @@ contract SmemVault is Ownable, ReentrancyGuard {
         if (amount == 0) revert ZeroAmount();
         _accrue(msg.sender);
         usdc.safeTransferFrom(msg.sender, address(this), amount);
-        principalOf[msg.sender] += amount;
+        // The eligible amount for today does not change, so a new deposit earns from the next full day.
+        accounts[msg.sender].principal += amount;
         totalPrincipal += amount;
         emit Deposited(msg.sender, amount);
     }
 
     function withdraw(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        if (principalOf[msg.sender] < amount) revert InsufficientPrincipal();
+        Account storage account = accounts[msg.sender];
+        if (account.principal < amount) revert InsufficientPrincipal();
         _accrue(msg.sender);
-        principalOf[msg.sender] -= amount;
+        account.principal -= amount;
+        if (account.eligible > account.principal) account.eligible = account.principal;
         totalPrincipal -= amount;
         usdc.safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
-    // ---------------------------------------------------------------------
-    // Tickets
-    // ---------------------------------------------------------------------
-
-    /// @notice Tickets the user holds now, including Tickets earned since the last update.
-    function ticketsOf(address user) public view returns (uint256) {
-        return settledTickets[user] + _pendingTickets(user);
+    function principalOf(address user) external view returns (uint256) {
+        return accounts[user].principal;
     }
 
-    /// @notice Ticket units the user earns each second at the current deposit.
-    function ticketRateOf(address user) external view returns (uint256) {
-        return (principalOf[user] * ticketsPerUsdcPerHour) / (usdcUnit * 1 hours);
+    // ---------------------------------------------------------------------
+    // Days and Tickets
+    // ---------------------------------------------------------------------
+
+    function currentDay() public view returns (uint256) {
+        return block.timestamp / dayLength;
+    }
+
+    /// @notice The timestamp when the current day ends and Tickets for it arrive.
+    function dayEndsAt() external view returns (uint256) {
+        return (currentDay() + 1) * dayLength;
+    }
+
+    /// @notice Tickets the user holds now. This includes every day that has ended.
+    function ticketsOf(address user) public view returns (uint256 tickets) {
+        (tickets,) = _preview(user);
+    }
+
+    /// @notice Tickets the user gets when the current day ends.
+    function ticketsAtDayEndOf(address user) external view returns (uint256) {
+        (, uint256 eligible) = _preview(user);
+        return _toTickets(eligible);
+    }
+
+    /// @notice Tickets the user earns for each full day at the current deposit.
+    function ticketsPerDayOf(address user) external view returns (uint256) {
+        return _toTickets(accounts[user].principal);
     }
 
     function spendTickets(address user, uint256 amount) external onlyGame {
         if (amount == 0) revert ZeroAmount();
         _accrue(user);
-        if (settledTickets[user] < amount) revert InsufficientTickets();
-        settledTickets[user] -= amount;
+        Account storage account = accounts[user];
+        if (account.tickets < amount) revert InsufficientTickets();
+        account.tickets -= amount;
         emit TicketsSpent(user, msg.sender, amount);
+    }
+
+    /// @notice A game pays winnings in Tickets.
+    function creditTickets(address user, uint256 amount) external onlyGame {
+        if (amount == 0) return;
+        _accrue(user);
+        accounts[user].tickets += amount;
+        emit TicketsCredited(user, msg.sender, amount);
     }
 
     // ---------------------------------------------------------------------
@@ -117,10 +169,6 @@ contract SmemVault is Ownable, ReentrancyGuard {
         emit PointsAwarded(user, msg.sender, day, points);
     }
 
-    function currentDay() public view returns (uint256) {
-        return block.timestamp / 1 days;
-    }
-
     // ---------------------------------------------------------------------
     // Admin
     // ---------------------------------------------------------------------
@@ -134,15 +182,29 @@ contract SmemVault is Ownable, ReentrancyGuard {
     // Internal
     // ---------------------------------------------------------------------
 
-    function _pendingTickets(address user) internal view returns (uint256) {
-        uint256 last = lastAccrualAt[user];
-        if (last == 0) return 0;
-        uint256 elapsed = block.timestamp - last;
-        return (principalOf[user] * elapsed * ticketsPerUsdcPerHour) / (usdcUnit * 1 hours);
+    function _toTickets(uint256 usdcAmount) internal view returns (uint256) {
+        return (usdcAmount * ticketsPerUsdcPerDay) / usdcUnit;
+    }
+
+    /// @dev Returns the Tickets after every ended day, and the eligible amount for today.
+    function _preview(address user) internal view returns (uint256 tickets, uint256 eligibleToday) {
+        Account storage account = accounts[user];
+        uint256 today = currentDay();
+        if (today == account.lastDay) return (account.tickets, account.eligible);
+
+        // lastDay has ended. It pays its lowest balance.
+        // Every day after lastDay and before today had no changes, so it pays the full principal.
+        uint256 fullDays = today - account.lastDay - 1;
+        tickets = account.tickets + _toTickets(account.eligible) + _toTickets(account.principal * fullDays);
+        // Today started with the full principal.
+        eligibleToday = account.principal;
     }
 
     function _accrue(address user) internal {
-        settledTickets[user] += _pendingTickets(user);
-        lastAccrualAt[user] = block.timestamp;
+        (uint256 tickets, uint256 eligibleToday) = _preview(user);
+        Account storage account = accounts[user];
+        account.tickets = tickets;
+        account.eligible = eligibleToday;
+        account.lastDay = currentDay();
     }
 }

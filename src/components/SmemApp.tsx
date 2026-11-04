@@ -1,7 +1,8 @@
 "use client";
 
+import { keepPreviousData } from "@tanstack/react-query";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { formatUnits, maxUint256, parseEventLogs, parseUnits, type Hash } from "viem";
+import { formatUnits, maxUint256, parseUnits, type Hash } from "viem";
 import {
   useConnect,
   useConnection,
@@ -13,11 +14,21 @@ import {
   useWriteContract,
 } from "wagmi";
 
-import { hexGame, TILES, TICKET_DECIMALS, usdc, USDC_DECIMALS, vault } from "@/lib/contracts";
+import {
+  DAY_LENGTH,
+  FIRST_DAY,
+  hexGame,
+  LEGACY_VAULTS,
+  legacyVaultAbi,
+  TILES,
+  TICKET_DECIMALS,
+  usdc,
+  USDC_DECIMALS,
+  vault,
+} from "@/lib/contracts";
 import { addressUrl, chain, txUrl } from "@/lib/wagmi";
 
-type Play = { hash: Hash; picked: number; drawn: number; staked: bigint; points: bigint };
-type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "play" | "switch";
+type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "stake" | "switch" | "migrate";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const fmt = (n: number, digits = 2) =>
@@ -58,8 +69,6 @@ export function SmemApp() {
   const [amount, setAmount] = useState("100");
   const [tile, setTile] = useState<number>(1);
   const [stake, setStake] = useState("1");
-  const [plays, setPlays] = useState<Play[]>([]);
-  const [rollingTile, setRollingTile] = useState<number | null>(null);
 
   // A browser clock that ticks every 100 ms. It stays 0 during the server prerender.
   const [now, setNow] = useState(0);
@@ -67,8 +76,12 @@ export function SmemApp() {
     const id = setInterval(() => setNow(Date.now()), 100);
     return () => clearInterval(id);
   }, []);
-  // The vault counts Prize Points per UTC day.
-  const today = BigInt(Math.floor(now / 1000 / 86400));
+  // The vault splits time into days of DAY_LENGTH seconds. Tickets arrive when a day ends.
+  const nowSeconds = Math.floor(now / 1000);
+  const dayIndex = Math.floor(nowSeconds / DAY_LENGTH);
+  const dayNumber = dayIndex - FIRST_DAY + 1;
+  const secondsLeft = DAY_LENGTH - (nowSeconds % DAY_LENGTH);
+  const dayProgress = 1 - secondsLeft / DAY_LENGTH;
   const user = address ?? "0x0000000000000000000000000000000000000000";
 
   const reads = useReadContracts({
@@ -77,31 +90,92 @@ export function SmemApp() {
       { ...usdc, functionName: "allowance", args: [user, vault.address] },
       { ...vault, functionName: "principalOf", args: [user] },
       { ...vault, functionName: "ticketsOf", args: [user] },
-      { ...vault, functionName: "ticketRateOf", args: [user] },
-      { ...vault, functionName: "pointsOf", args: [today, user] },
-      { ...vault, functionName: "lifetimePointsOf", args: [user] },
+      { ...vault, functionName: "ticketsPerDayOf", args: [user] },
+      { ...vault, functionName: "ticketsAtDayEndOf", args: [user] },
+      { ...hexGame, functionName: "usdcWonOf", args: [user] },
+      { ...hexGame, functionName: "lastSettledRound" },
       { ...vault, functionName: "totalPrincipal" },
+      { ...hexGame, functionName: "prizeReserve" },
+      { ...hexGame, functionName: "currentRoundId" },
+      { ...hexGame, functionName: "currentStakesOf", args: [user] },
     ],
-    query: { enabled: ready && now > 0, refetchInterval: 4000 },
+    // keepPreviousData keeps the old numbers on screen while a new read loads.
+    query: { enabled: ready && now > 0, refetchInterval: 2000, placeholderData: keepPreviousData },
   });
+
+  // Read again as soon as a new day starts, so the new Tickets show at once.
+  const { refetch } = reads;
+  useEffect(() => {
+    if (ready && dayIndex > 0) void refetch();
+  }, [dayIndex, ready, refetch]);
 
   const value = (i: number) => (reads.data?.[i]?.result as bigint | undefined) ?? 0n;
   const walletUsdc = value(0);
   const allowance = value(1);
   const principal = value(2);
   const tickets = value(3);
-  const ticketRate = value(4);
-  const pointsToday = value(5);
-  const lifetimePoints = value(6);
-  const totalPrincipal = value(7);
+  const ticketsPerDay = value(4);
+  const ticketsAtDayEnd = value(5);
+  const usdcWon = value(6);
+  const lastRound = value(7);
+  const totalPrincipal = value(8);
+  const prizeReserve = value(9);
+  const currentId = value(10);
+  const myStakes = (reads.data?.[11]?.result as readonly bigint[] | undefined) ?? ZERO_STAKES;
 
-  // Tickets grow every second. Count them up between reads so the user sees them grow.
-  const readAt = reads.dataUpdatedAt;
-  const elapsed = readAt && now > readAt ? (now - readAt) / 1000 : 0;
-  const liveTickets =
-    Number(formatUnits(tickets, TICKET_DECIMALS)) + Number(formatUnits(ticketRate, TICKET_DECIMALS)) * elapsed;
-  const wholeTickets = Math.floor(Number(formatUnits(tickets, TICKET_DECIMALS)));
-  const ticketsPerMinute = Number(formatUnits(ticketRate, TICKET_DECIMALS)) * 60;
+  // Show new Tickets the moment a day ends. The chain read follows a second or two later.
+  const readDay = reads.dataUpdatedAt ? Math.floor(reads.dataUpdatedAt / 1000 / DAY_LENGTH) : dayIndex;
+  const daysSinceRead = Math.max(0, dayIndex - readDay);
+  const shownTickets =
+    tickets + (daysSinceRead > 0 ? ticketsAtDayEnd + ticketsPerDay * BigInt(daysSinceRead - 1) : 0n);
+  // Tickets that build up during the current day and arrive when it ends.
+  const eligibleToday = daysSinceRead > 0 ? ticketsPerDay : ticketsAtDayEnd;
+  const accruing = Number(formatUnits(eligibleToday, TICKET_DECIMALS)) * dayProgress;
+
+  // The last settled round: which hex won, and what this player got.
+  const lastReads = useReadContracts({
+    contracts: [
+      { ...hexGame, functionName: "getRound", args: [lastRound] },
+      { ...hexGame, functionName: "stakesOf", args: [lastRound, user] },
+      { ...hexGame, functionName: "wonInRound", args: [lastRound, user] },
+      { ...hexGame, functionName: "getRound", args: [currentId] },
+    ],
+    query: { enabled: ready && now > 0, refetchInterval: 2000, placeholderData: keepPreviousData },
+  });
+  const last = lastRound > 0n ? (lastReads.data?.[0]?.result as RoundData | undefined) : undefined;
+  const myLastStakes = (lastReads.data?.[1]?.result as readonly bigint[] | undefined) ?? ZERO_STAKES;
+  const myLastWin = (lastReads.data?.[2]?.result as bigint | undefined) ?? 0n;
+  const current = currentId > 0n ? (lastReads.data?.[3]?.result as RoundData | undefined) : undefined;
+
+  // Round phases. A round opens with the first stake, runs for a fixed time, then the game waits for the next stake.
+  const nowExact = now / 1000;
+  const openedAt = Number(current?.[2] ?? 0n);
+  const endsAt = Number(current?.[3] ?? 0n);
+  const phase: "none" | "open" | "drawing" | "waiting" = !current
+    ? "none"
+    : current[5]
+      ? "waiting"
+      : nowExact < endsAt
+        ? "open"
+        : "drawing";
+  const roundSecondsLeft = Math.max(0, Math.ceil(endsAt - nowExact));
+  const roundProgress = endsAt > openedAt ? Math.min(1, Math.max(0, (nowExact - openedAt) / (endsAt - openedAt))) : 0;
+
+  // Deposits left in older vaults from earlier deploys.
+  const legacyReads = useReadContracts({
+    contracts: LEGACY_VAULTS.map(
+      (address) => ({ address, abi: legacyVaultAbi, functionName: "principalOf", args: [user] }) as const,
+    ),
+    query: { enabled: ready && now > 0, refetchInterval: 10_000, placeholderData: keepPreviousData },
+  });
+  const legacy = LEGACY_VAULTS.map((address, i) => ({
+    address,
+    amount: (legacyReads.data?.[i]?.result as bigint | undefined) ?? 0n,
+  })).filter((v) => v.amount > 0n && v.address.toLowerCase() !== vault.address.toLowerCase());
+  const legacyTotal = legacy.reduce((sum, v) => sum + v.amount, 0n);
+
+  const toTickets = (v: bigint) => Number(formatUnits(v, TICKET_DECIMALS));
+  const wholeTickets = Math.floor(toTickets(tickets));
 
   async function run(label: Exclude<Busy, null>, action: () => Promise<Hash>) {
     if (!publicClient) return;
@@ -153,7 +227,7 @@ export function SmemApp() {
   async function onDeposit() {
     const value = safeParse(amount, USDC_DECIMALS);
     if (!value) return setError("Enter an amount greater than 0.");
-    if (value > walletUsdc) return setError("Your wallet does not have that much tUSDC. Get some from the faucet.");
+    if (value > walletUsdc) return setError("Your wallet does not have that much USDC. Get some from the faucet.");
     await run("deposit", async () => {
       if (allowance < value) {
         // One approval lets every later deposit go through in a single transaction.
@@ -168,6 +242,31 @@ export function SmemApp() {
     });
   }
 
+  // Withdraws from every old vault, then deposits the total into the current vault.
+  async function onMigrate() {
+    await run("migrate", async () => {
+      for (const old of legacy) {
+        const hash = await write.mutateAsync({
+          address: old.address,
+          abi: legacyVaultAbi,
+          functionName: "withdraw",
+          args: [old.amount],
+        });
+        await publicClient!.waitForTransactionReceipt({ hash });
+      }
+      if (allowance < legacyTotal) {
+        const approveHash = await write.mutateAsync({
+          ...usdc,
+          functionName: "approve",
+          args: [vault.address, maxUint256],
+        });
+        await publicClient!.waitForTransactionReceipt({ hash: approveHash });
+      }
+      return write.mutateAsync({ ...vault, functionName: "deposit", args: [legacyTotal] });
+    });
+    await legacyReads.refetch();
+  }
+
   async function onWithdraw() {
     const value = safeParse(amount, USDC_DECIMALS);
     if (!value) return setError("Enter an amount greater than 0.");
@@ -175,43 +274,29 @@ export function SmemApp() {
     await run("withdraw", () => write.mutateAsync({ ...vault, functionName: "withdraw", args: [value] }));
   }
 
-  async function onPlay() {
+  async function onStake() {
     const staked = BigInt(Math.max(0, Math.floor(Number(stake) || 0)));
     if (staked === 0n) return setError("Stake at least 1 Ticket.");
-    if (Number(staked) > liveTickets) return setError("You do not have enough Tickets for this stake.");
-
-    let i = 0;
-    const roll = setInterval(() => setRollingTile(TILES[i++ % TILES.length]), 110);
-    try {
-      const receipt = await run("play", () =>
-        write.mutateAsync({ ...hexGame, functionName: "play", args: [tile, staked] }),
-      );
-      if (!receipt) return;
-      const [played] = parseEventLogs({ abi: hexGame.abi, logs: receipt.logs, eventName: "Played" }) as unknown as {
-        args: { pickedTile: number; drawnTile: number; ticketsBurned: bigint; pointsWon: bigint };
-      }[];
-      if (played) {
-        setPlays((p) =>
-          [
-            {
-              hash: receipt.transactionHash,
-              picked: played.args.pickedTile,
-              drawn: played.args.drawnTile,
-              staked: played.args.ticketsBurned,
-              points: played.args.pointsWon,
-            },
-            ...p,
-          ].slice(0, 6),
-        );
-      }
-    } finally {
-      clearInterval(roll);
-      setRollingTile(null);
-    }
+    if (Number(staked) > wholeTickets) return setError("You do not have enough Tickets for this stake.");
+    await run("stake", async () => {
+      // A stake can also draw the last round and pay its winners, so the gas can grow between the estimate and
+      // the block. Double the estimate and add room for a draw.
+      const estimate = await publicClient!.estimateContractGas({
+        ...hexGame,
+        functionName: "stake",
+        args: [tile, staked],
+        account: address!,
+      });
+      return write.mutateAsync({ ...hexGame, functionName: "stake", args: [tile, staked], gas: estimate * 2n + 400_000n });
+    });
   }
 
-  const lastPlay = plays[0];
-  const drawnTile = busy === "play" ? rollingTile : lastPlay?.drawn;
+  const usdcText = (v: bigint) => fmt(Number(formatUnits(v, USDC_DECIMALS)));
+  const roundTotals = current?.[0] ?? ZERO_STAKES;
+  const roundTickets = roundTotals.reduce((a, b) => a + b, 0n);
+  const roundPool = current?.[1] ?? 0n;
+  // The yield pool builds up over the round. The draw pays the full amount.
+  const poolSoFar = Number(formatUnits(roundPool, USDC_DECIMALS)) * (phase === "open" ? roundProgress : 1);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
@@ -256,27 +341,78 @@ export function SmemApp() {
           <span className="text-accent-strong">Your Tickets play.</span>
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-sm text-muted sm:text-base">
-          Deposit USDC. Earn Tickets every second. Burn Tickets in the hex game to win Prize Points. A loss
-          costs Tickets, never your deposit.
+          Deposit USDC. Earn Tickets at the end of every day. Stake Tickets on a hex to win the daily yield pool. A
+          loss costs Tickets, never your deposit.
         </p>
       </section>
 
+      {ready && legacyTotal > 0n && (
+        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-accent/60 bg-accent/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm">
+            You have <span className="font-semibold">{fmt(Number(formatUnits(legacyTotal, USDC_DECIMALS)))} USDC</span>{" "}
+            in an old Morney vault from an earlier deploy. Move it to the current vault to earn Tickets.
+          </p>
+          <button className="btn-primary shrink-0" onClick={onMigrate} disabled={!!busy}>
+            {busy === "migrate" ? "Moving…" : "Move to current vault"}
+          </button>
+        </div>
+      )}
+
       {/* Stats */}
       <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="Wallet" value={ready ? fmt(Number(formatUnits(walletUsdc, USDC_DECIMALS))) : "—"} unit="tUSDC" />
-        <Stat label="Saved" value={ready ? fmt(Number(formatUnits(principal, USDC_DECIMALS))) : "—"} unit="tUSDC" />
+        <Stat label="Wallet" value={ready ? fmt(Number(formatUnits(walletUsdc, USDC_DECIMALS))) : "—"} unit="USDC" />
+        <Stat label="Saved" value={ready ? fmt(Number(formatUnits(principal, USDC_DECIMALS))) : "—"} unit="USDC" />
         <Stat
           label="Tickets"
-          value={ready ? fmt(liveTickets) : "—"}
-          unit={ready && ticketRate > 0n ? `+${fmt(ticketsPerMinute)}/min` : "Tickets"}
+          value={ready ? fmt(toTickets(shownTickets)) : "—"}
+          unit={
+            ready
+              ? `+${fmt(accruing)} building up · ${fmt(toTickets(ticketsPerDay), 0)}/day`
+              : "Tickets"
+          }
           highlight
         />
         <Stat
-          label="Prize Points"
-          value={ready ? pointsToday.toLocaleString() : "—"}
-          unit={ready ? `today · ${lifetimePoints.toLocaleString()} all time` : "today"}
+          label="Yield won"
+          value={ready ? usdcText(usdcWon) : "—"}
+          unit="USDC · all time"
         />
       </section>
+
+      {/* Day clock */}
+      {mounted && now > 0 && (
+        <section className="mt-3 rounded-2xl border border-border bg-surface p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+            <span>
+              <span className="font-semibold">Day {dayNumber.toLocaleString()}</span>
+              <span className="text-muted"> ends in </span>
+              <span className="font-mono tabular-nums">{secondsLeft}s</span>
+            </span>
+            <span className="text-muted">
+              {ready ? (
+                ticketsAtDayEnd > 0n ? (
+                  <>
+                    You get <span className="text-accent-strong">+{fmt(toTickets(ticketsAtDayEnd))} Tickets</span> in{" "}
+                    <span className="font-mono tabular-nums">{secondsLeft}s</span>, when this day ends
+                  </>
+                ) : principal > 0n ? (
+                  <>
+                    Your deposit counts from the next full day. First Tickets in{" "}
+                    <span className="font-mono tabular-nums text-accent-strong">{secondsLeft + DAY_LENGTH}s</span>
+                  </>
+                ) : (
+                  "Deposit USDC to earn Tickets every day"
+                )
+              ) : (
+                `Demo: 1 day = ${DAY_LENGTH} seconds`
+              )}
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-accent transition-[width] duration-100 ease-linear" style={{ width: `${dayProgress * 100}%` }} />
+          </div>
+        </section>
+      )}
 
       {!ready && mounted && (
         <div className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
@@ -291,15 +427,16 @@ export function SmemApp() {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Savings</h3>
             <button className="text-sm text-accent-strong hover:underline disabled:opacity-40" onClick={onFaucet} disabled={!ready || !!busy}>
-              {busy === "faucet" ? "Minting…" : "Get 1,000 test USDC"}
+              {busy === "faucet" ? "Minting…" : "Get 1,000 USDC"}
             </button>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Every 1 tUSDC you save earns Tickets each second. Withdraw your full deposit at any time.
+            Every 10 USDC you hold for a full day earns 1 Ticket when the day ends. Withdraw your full deposit at any
+            time.
           </p>
 
           <label className="mt-5 block text-xs uppercase tracking-wider text-muted" htmlFor="amount">
-            Amount (tUSDC)
+            Amount (USDC)
           </label>
           <div className="mt-2 flex gap-2">
             <input
@@ -328,8 +465,9 @@ export function SmemApp() {
           </div>
 
           <dl className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
-            <Row label="Total saved by everyone" value={`${fmt(Number(formatUnits(totalPrincipal, USDC_DECIMALS)))} tUSDC`} />
-            <Row label="Your Ticket rate" value={`${fmt(ticketsPerMinute)} per minute`} />
+            <Row label="Total saved by everyone" value={`${fmt(Number(formatUnits(totalPrincipal, USDC_DECIMALS)))} USDC`} />
+            <Row label="Your Tickets per day" value={fmt(toTickets(ticketsPerDay))} />
+            <Row label="Day length (demo)" value={`${DAY_LENGTH} seconds`} />
             <Row label="Yield source" value="Simulated (testnet)" />
           </dl>
         </div>
@@ -337,41 +475,68 @@ export function SmemApp() {
         {/* Game */}
         <div className="card">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Hex Spin</h3>
-            <span className="text-xs text-muted">Win = stake × 6 Prize Points</span>
+            <h3 className="text-lg font-semibold">Hex Yield Draw</h3>
+            <span className="text-xs text-muted">
+              {phase === "open"
+                ? `Round ${currentId} · draw in ${roundSecondsLeft}s`
+                : phase === "drawing"
+                  ? `Round ${currentId} · drawing…`
+                  : "Waiting for the first stake"}
+            </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Pick a tile and stake Tickets. The game burns your stake. If the drawn tile matches your pick, you win
-            Prize Points.
+            The first stake starts a round. When the round ends, one hex wins its yield pool. Players on that hex
+            split 95% of it by their share of the hex. Morney keeps 5%. Then the board waits for the next stake.
           </p>
 
-          <div className="mt-5 grid grid-cols-3 justify-items-center gap-x-2 gap-y-3">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 rounded-xl bg-surface-2 px-4 py-3">
+            <span className="text-sm text-muted">
+              {phase === "open" ? "Yield pool so far" : phase === "drawing" ? "Yield pool" : "Next yield pool"}
+            </span>
+            <span className="font-mono text-lg tabular-nums">
+              {phase === "open" || phase === "drawing"
+                ? `${poolSoFar.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} USDC`
+                : "Starts with the first stake"}
+            </span>
+          </div>
+
+          <div className="mt-4 grid grid-cols-3 justify-items-center gap-x-2 gap-y-3">
             {TILES.map((t) => {
               const picked = t === tile;
-              const drawn = t === drawnTile;
-              const won = drawn && busy !== "play" && lastPlay?.picked === t;
+              const lastWinner = phase === "waiting" && current?.[4] === t;
+              const onHex = roundTotals[t - 1];
+              const mine = myStakes[t - 1];
               return (
                 <button
                   key={t}
                   onClick={() => setTile(t)}
-                  disabled={busy === "play"}
                   aria-pressed={picked}
-                  aria-label={`Tile ${t}`}
+                  aria-label={`Hex ${t}`}
                   className={[
-                    "hex grid aspect-[1.15] w-full max-w-28 place-items-center text-2xl font-semibold transition",
-                    drawn && busy === "play" ? "hex-rolling bg-accent-strong text-background" : "",
-                    drawn && busy !== "play" ? (won ? "bg-win text-background" : "bg-lose text-background") : "",
-                    !drawn && picked ? "bg-accent text-foreground" : "",
-                    !drawn && !picked ? "bg-surface-2 text-muted hover:bg-border" : "",
+                    "hex grid aspect-[1.15] w-full max-w-28 place-items-center font-semibold transition",
+                    lastWinner ? "bg-win text-background" : picked ? "bg-accent text-foreground" : "bg-surface-2 text-muted hover:bg-border",
                   ].join(" ")}
                 >
-                  {t}
+                  <span className="flex flex-col items-center leading-tight">
+                    <span className="text-2xl">{t}</span>
+                    <span className="font-mono text-[11px] font-normal opacity-80">{onHex.toLocaleString()} 🎟</span>
+                    {mine > 0n && <span className="font-mono text-[10px] font-normal">you {mine.toLocaleString()}</span>}
+                  </span>
                 </button>
               );
             })}
           </div>
+          <p className="mt-2 text-center text-xs text-muted">
+            {phase === "open"
+              ? `${roundTickets.toLocaleString()} Tickets staked · draw in ${roundSecondsLeft}s`
+              : phase === "drawing"
+                ? "Drawing the winning hex on chain…"
+                : phase === "waiting"
+                  ? `Round ${currentId} ended. Hex ${current?.[4]} won. Stake to start round ${currentId + 1n}.`
+                  : "Stake Tickets to start the first round."}
+          </p>
 
-          <label className="mt-5 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
+          <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
             Stake (Tickets) · you have {ready ? wholeTickets.toLocaleString() : "—"}
           </label>
           <div className="mt-2 flex gap-2">
@@ -392,35 +557,42 @@ export function SmemApp() {
               </button>
             ))}
           </div>
-          <button className="btn-primary mt-3 w-full" onClick={onPlay} disabled={!ready || !!busy}>
-            {busy === "play" ? "Drawing on chain…" : `Burn ${stake || 0} Ticket${stake === "1" ? "" : "s"} on tile ${tile}`}
+          <button className="btn-primary mt-3 w-full" onClick={onStake} disabled={!ready || !!busy}>
+            {busy === "stake"
+              ? "Staking…"
+              : phase === "open"
+                ? `Stake ${stake || 0} Ticket${stake === "1" ? "" : "s"} on hex ${tile}`
+                : `Start a round: stake ${stake || 0} on hex ${tile}`}
           </button>
 
-          <div aria-live="polite" className="mt-3 min-h-6 text-center text-sm">
-            {lastPlay && busy !== "play" && (
-              <span className={lastPlay.points > 0n ? "text-win" : "text-lose"}>
-                Drew tile {lastPlay.drawn}.{" "}
-                {lastPlay.points > 0n
-                  ? `You won ${lastPlay.points.toLocaleString()} Prize Points!`
-                  : `No match. You burned ${lastPlay.staked.toLocaleString()} Ticket${lastPlay.staked === 1n ? "" : "s"}.`}
-              </span>
+          <div aria-live="polite" className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+            {last?.[5] ? (
+              <>
+                <div>
+                  <span className="text-muted">Last draw · Round {lastRound.toString()}: </span>
+                  hex <span className="font-semibold">{last[4]}</span> won{" "}
+                  {last[6] > 0n ? (
+                    <>
+                      <span className="font-mono">{usdcText(last[6])} USDC</span> for its players
+                    </>
+                  ) : (
+                    <>nothing. Nobody was on it, so the pool stays in the reserve.</>
+                  )}
+                </div>
+                {myLastWin > 0n ? (
+                  <div className="mt-1 text-win">You won {usdcText(myLastWin)} USDC. It is in your wallet now.</div>
+                ) : myLastStakes.some((x) => x > 0n) ? (
+                  <div className="mt-1 text-lose">You were not on hex {last[4]}. Your staked Tickets are spent.</div>
+                ) : null}
+              </>
+            ) : (
+              <span className="text-muted">No draws yet. Stake Tickets to open the first round.</span>
             )}
           </div>
 
-          {plays.length > 0 && (
-            <ul className="mt-3 divide-y divide-border border-t border-border text-sm">
-              {plays.map((p) => (
-                <li key={p.hash} className="flex items-center justify-between py-2">
-                  <span className="text-muted">
-                    Picked {p.picked} · drew {p.drawn} · {p.staked.toString()} burned
-                  </span>
-                  <a className="font-mono text-xs text-accent-strong hover:underline" href={txUrl(p.hash)} target="_blank" rel="noreferrer">
-                    {p.points > 0n ? `+${p.points} pts` : "tx"} ↗
-                  </a>
-                </li>
-              ))}
-            </ul>
-          )}
+          <dl className="mt-4 space-y-2 text-sm">
+            <Row label="Prize reserve (simulated yield)" value={`${usdcText(prizeReserve)} USDC`} />
+          </dl>
         </div>
       </section>
 
@@ -440,15 +612,19 @@ export function SmemApp() {
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <ContractLink name="SmemVault" address={vault.address} />
           <ContractLink name="HexGame" address={hexGame.address} />
-          <ContractLink name="tUSDC" address={usdc.address} />
+          <ContractLink name="USDC" address={usdc.address} />
         </div>
         <p className="mt-3">
-          Testnet demo. tUSDC has no value. The hex draw uses block data and is not safe for real prizes.
+          Testnet demo. This USDC is a test token with no value. The hex draw uses block data and is not safe for real prizes.
         </p>
       </footer>
     </div>
   );
 }
+
+// getRound: totals, yieldPool, openedAt, endsAt, winningHex, settled, paidToWinners, fee
+type RoundData = readonly [readonly bigint[], bigint, bigint, bigint, number, boolean, bigint, bigint];
+const ZERO_STAKES: readonly bigint[] = [0n, 0n, 0n, 0n, 0n, 0n];
 
 function safeParse(value: string, decimals: number) {
   try {

@@ -1,42 +1,101 @@
 // Deploys MockUSDC, SmemVault and HexGame, then writes the addresses and ABIs for the web app.
 // Run: npm run deploy
+// Set USDC_ADDRESS to keep an existing MockUSDC, so wallets keep their test USDC.
+// Set VAULT_ADDRESS to keep an existing SmemVault, so deposits and Tickets stay. Only HexGame is new.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { network } from "hardhat";
-import { parseUnits } from "viem";
+import { getAddress, parseUnits } from "viem";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outFile = path.resolve(here, "../../src/contracts/deployment.json");
 
-// Tickets that 1 USDC earns in 1 hour. 10 makes Tickets visible within seconds in a demo.
-const TICKETS_PER_USDC_PER_HOUR = process.env.TICKETS_PER_USDC_PER_HOUR ?? "10";
+// Tickets that 1 USDC earns for 1 full day. 0.1 means 10 USDC earns 1 Ticket per day.
+const TICKETS_PER_USDC_PER_DAY = process.env.TICKETS_PER_USDC_PER_DAY ?? "0.1";
+// The length of one day in seconds. The demo uses 10 seconds. Production uses 86400.
+const DAY_LENGTH_SECONDS = BigInt(process.env.DAY_LENGTH_SECONDS ?? "10");
+// The simulated yield pool for each round, in USDC.
+const MIN_YIELD_POOL = parseUnits(process.env.MIN_YIELD_POOL ?? "1", 6);
+const MAX_YIELD_POOL = parseUnits(process.env.MAX_YIELD_POOL ?? "10", 6);
+// How long a game round lasts after its first stake.
+const ROUND_LENGTH_SECONDS = BigInt(process.env.ROUND_LENGTH_SECONDS ?? "30");
+// USDC that the deployer sends to HexGame to pay the simulated yield pools.
+const PRIZE_RESERVE = parseUnits(process.env.PRIZE_RESERVE ?? "5000", 6);
 
 const { viem, networkName } = await network.create();
 const publicClient = await viem.getPublicClient();
 const [deployer] = await viem.getWalletClients();
 const chainId = await publicClient.getChainId();
+const wait = (hash: `0x${string}`) => publicClient.waitForTransactionReceipt({ hash });
 
 console.log(`Network:  ${networkName} (chain ${chainId})`);
 console.log(`Deployer: ${deployer.account.address}`);
 console.log(`Balance:  ${(await publicClient.getBalance({ address: deployer.account.address })) / 10n ** 15n} mMON`);
 
+type Previous = {
+  contracts?: { HexGame?: { address: string } };
+  constructorArgs?: { SmemVault?: unknown[] };
+};
+let previous: Previous = {};
+try {
+  previous = JSON.parse(await readFile(outFile, "utf8"));
+} catch {
+  // No earlier deployment.
+}
+
 const startBlock = await publicClient.getBlockNumber();
 
-const usdc = await viem.deployContract("MockUSDC");
-console.log(`MockUSDC:  ${usdc.address}`);
+const usdc = process.env.USDC_ADDRESS
+  ? await viem.getContractAt("MockUSDC", getAddress(process.env.USDC_ADDRESS))
+  : await viem.deployContract("MockUSDC");
+console.log(`MockUSDC:  ${usdc.address}${process.env.USDC_ADDRESS ? " (kept)" : ""}`);
 
-const ticketRate = parseUnits(TICKETS_PER_USDC_PER_HOUR, 18);
-const vault = await viem.deployContract("SmemVault", [usdc.address, 6, ticketRate, deployer.account.address]);
-console.log(`SmemVault: ${vault.address}`);
+let vaultArgs: unknown[];
+let vault;
+if (process.env.VAULT_ADDRESS) {
+  vault = await viem.getContractAt("SmemVault", getAddress(process.env.VAULT_ADDRESS));
+  vaultArgs = previous.constructorArgs?.SmemVault ?? [];
+  console.log(`SmemVault: ${vault.address} (kept)`);
+} else {
+  const ticketRate = parseUnits(TICKETS_PER_USDC_PER_DAY, 18);
+  const args = [usdc.address, 6, ticketRate, DAY_LENGTH_SECONDS, deployer.account.address] as const;
+  vault = await viem.deployContract("SmemVault", [...args]);
+  vaultArgs = [...args];
+  console.log(`SmemVault: ${vault.address}`);
+}
+const dayLength = await vault.read.dayLength();
 
-const game = await viem.deployContract("HexGame", [vault.address]);
+const gameArgs = [
+  vault.address,
+  usdc.address,
+  deployer.account.address,
+  MIN_YIELD_POOL,
+  MAX_YIELD_POOL,
+  ROUND_LENGTH_SECONDS,
+] as const;
+const game = await viem.deployContract("HexGame", [...gameArgs]);
 console.log(`HexGame:   ${game.address}`);
 
-const hash = await vault.write.setGame([game.address, true]);
-await publicClient.waitForTransactionReceipt({ hash });
+await wait(await vault.write.setGame([game.address, true]));
 console.log("HexGame is allowed to spend Tickets.");
+
+// Turn off the old game when the vault is kept.
+const oldGame = previous.contracts?.HexGame?.address;
+if (process.env.VAULT_ADDRESS && oldGame && getAddress(oldGame) !== getAddress(game.address)) {
+  if (await vault.read.isGame([getAddress(oldGame)])) {
+    await wait(await vault.write.setGame([getAddress(oldGame), false]));
+    console.log(`Old HexGame ${oldGame} is turned off.`);
+  }
+}
+
+// Fund the prize reserve with test USDC from the faucet.
+while ((await usdc.read.balanceOf([deployer.account.address])) < PRIZE_RESERVE) {
+  await wait(await usdc.write.faucet());
+}
+await wait(await usdc.write.transfer([game.address, PRIZE_RESERVE]));
+console.log(`Prize reserve: ${PRIZE_RESERVE / 10n ** 6n} USDC`);
 
 async function abiOf(name: string) {
   const artifact = JSON.parse(
@@ -45,15 +104,19 @@ async function abiOf(name: string) {
   return artifact.abi;
 }
 
+const stringify = (args: readonly unknown[]) => args.map((a) => (typeof a === "bigint" ? a.toString() : a));
+
 const deployment = {
   chainId,
   network: networkName,
   deployedAt: new Date().toISOString(),
   startBlock: startBlock.toString(),
   deployer: deployer.account.address,
+  dayLengthSeconds: Number(dayLength),
+  roundLengthSeconds: Number(ROUND_LENGTH_SECONDS),
   constructorArgs: {
-    SmemVault: [usdc.address, 6, ticketRate.toString(), deployer.account.address],
-    HexGame: [vault.address],
+    SmemVault: stringify(vaultArgs),
+    HexGame: stringify(gameArgs),
   },
   contracts: {
     MockUSDC: { address: usdc.address, abi: await abiOf("MockUSDC") },

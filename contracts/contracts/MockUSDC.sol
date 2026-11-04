@@ -9,13 +9,13 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract MockUSDC is ERC20 {
     uint256 public constant FAUCET_AMOUNT = 1_000e6;
 
-    constructor() ERC20("Smem Test USDC", "tUSDC") {}
+    constructor() ERC20("USDC", "USDC") {}
 
     function decimals() public pure override returns (uint8) {
         return 6;
     }
 
-    /// @notice Mints 1,000 tUSDC to the caller.
+    /// @notice Mints 1,000 USDC to the caller.
     function faucet() external {
         _mint(msg.sender, FAUCET_AMOUNT);
     }

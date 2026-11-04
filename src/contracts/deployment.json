@@ -1,23 +1,31 @@
 {
   "chainId": 10143,
   "network": "monadTestnet",
-  "deployedAt": "2026-11-04T09:26:09.948Z",
-  "startBlock": "76879864",
+  "deployedAt": "2026-11-04T10:57:21.911Z",
+  "startBlock": "76897578",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
+  "dayLengthSeconds": 10,
+  "roundLengthSeconds": 30,
   "constructorArgs": {
     "SmemVault": [
-      "0x3ba77514287ff71f9d93ef011b84bf378a35036a",
+      "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
       6,
-      "10000000000000000000",
+      "100000000000000000",
+      "10",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f"
     ],
     "HexGame": [
-      "0xd1204811989616d1b92efb8730591c67703b4e9c"
+      "0xF98271E56Cac1f9a9E2bb08570c2c5C1AFE63914",
+      "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
+      "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
+      "1000000",
+      "10000000",
+      "30"
     ]
   },
   "contracts": {
     "MockUSDC": {
-      "address": "0x3ba77514287ff71f9d93ef011b84bf378a35036a",
+      "address": "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
       "abi": [
         {
           "inputs": [],
@@ -355,7 +363,7 @@
       ]
     },
     "SmemVault": {
-      "address": "0xd1204811989616d1b92efb8730591c67703b4e9c",
+      "address": "0xF98271E56Cac1f9a9E2bb08570c2c5C1AFE63914",
       "abi": [
         {
           "inputs": [
@@ -371,7 +379,12 @@
             },
             {
               "internalType": "uint256",
-              "name": "ticketsPerUsdcPerHour_",
+              "name": "ticketsPerUsdcPerDay_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "dayLength_",
               "type": "uint256"
             },
             {
@@ -439,6 +452,11 @@
         {
           "inputs": [],
           "name": "ZeroAmount",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "ZeroDayLength",
           "type": "error"
         },
         {
@@ -551,6 +569,31 @@
               "type": "uint256"
             }
           ],
+          "name": "TicketsCredited",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "game",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
           "name": "TicketsSpent",
           "type": "event"
         },
@@ -605,8 +648,52 @@
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "creditTickets",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "inputs": [],
           "name": "currentDay",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "dayEndsAt",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "dayLength",
           "outputs": [
             {
               "internalType": "uint256",
@@ -644,25 +731,6 @@
               "internalType": "bool",
               "name": "",
               "type": "bool"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "name": "lastAccrualAt",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
             }
           ],
           "stateMutability": "view",
@@ -728,7 +796,7 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "",
+              "name": "user",
               "type": "address"
             }
           ],
@@ -794,7 +862,7 @@
               "type": "address"
             }
           ],
-          "name": "ticketRateOf",
+          "name": "ticketsAtDayEndOf",
           "outputs": [
             {
               "internalType": "uint256",
@@ -817,6 +885,25 @@
           "outputs": [
             {
               "internalType": "uint256",
+              "name": "tickets",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "name": "ticketsPerDayOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
               "name": "",
               "type": "uint256"
             }
@@ -826,7 +913,7 @@
         },
         {
           "inputs": [],
-          "name": "ticketsPerUsdcPerHour",
+          "name": "ticketsPerUsdcPerDay",
           "outputs": [
             {
               "internalType": "uint256",
@@ -911,7 +998,7 @@
       ]
     },
     "HexGame": {
-      "address": "0xc7d030468a0c95662e067243e81f7bd7c9e6510e",
+      "address": "0x6a27d7ecd48da8f4d5c358732c522385e2947b30",
       "abi": [
         {
           "inputs": [
@@ -919,6 +1006,31 @@
               "internalType": "contract SmemVault",
               "name": "vault_",
               "type": "address"
+            },
+            {
+              "internalType": "contract IERC20",
+              "name": "usdc_",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "treasury_",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minYieldPool_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxYieldPool_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "roundLength_",
+              "type": "uint256"
             }
           ],
           "stateMutability": "nonpayable",
@@ -926,18 +1038,97 @@
         },
         {
           "inputs": [],
-          "name": "InvalidTile",
+          "name": "InvalidConfig",
           "type": "error"
         },
         {
           "inputs": [],
-          "name": "OnlyEOA",
+          "name": "InvalidTile",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            }
+          ],
+          "name": "SafeERC20FailedOperation",
           "type": "error"
         },
         {
           "inputs": [],
           "name": "ZeroStake",
           "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "yieldPool",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "endsAt",
+              "type": "uint256"
+            }
+          ],
+          "name": "RoundOpened",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint8",
+              "name": "winningHex",
+              "type": "uint8"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "yieldPool",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "paidToWinners",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "fee",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "winners",
+              "type": "uint256"
+            }
+          ],
+          "name": "Settled",
+          "type": "event"
         },
         {
           "anonymous": false,
@@ -951,40 +1142,53 @@
             {
               "indexed": true,
               "internalType": "uint256",
-              "name": "round",
+              "name": "roundId",
               "type": "uint256"
             },
             {
               "indexed": false,
               "internalType": "uint8",
-              "name": "pickedTile",
-              "type": "uint8"
-            },
-            {
-              "indexed": false,
-              "internalType": "uint8",
-              "name": "drawnTile",
+              "name": "hexId",
               "type": "uint8"
             },
             {
               "indexed": false,
               "internalType": "uint256",
-              "name": "ticketsBurned",
-              "type": "uint256"
-            },
-            {
-              "indexed": false,
-              "internalType": "uint256",
-              "name": "pointsWon",
+              "name": "tickets",
               "type": "uint256"
             }
           ],
-          "name": "Played",
+          "name": "Staked",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "player",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "Won",
           "type": "event"
         },
         {
           "inputs": [],
-          "name": "POINTS_PER_TICKET_ON_WIN",
+          "name": "FEE_BPS",
           "outputs": [
             {
               "internalType": "uint256",
@@ -1009,10 +1213,181 @@
           "type": "function"
         },
         {
+          "inputs": [],
+          "name": "currentRoundId",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "player",
+              "type": "address"
+            }
+          ],
+          "name": "currentStakesOf",
+          "outputs": [
+            {
+              "internalType": "uint256[6]",
+              "name": "",
+              "type": "uint256[6]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            }
+          ],
+          "name": "getRound",
+          "outputs": [
+            {
+              "internalType": "uint256[6]",
+              "name": "totals",
+              "type": "uint256[6]"
+            },
+            {
+              "internalType": "uint256",
+              "name": "yieldPool",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint64",
+              "name": "openedAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "endsAt",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint8",
+              "name": "winningHex",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bool",
+              "name": "settled",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "paidToWinners",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "fee",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "hasPending",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "lastSettledRound",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "maxYieldPool",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "minYieldPool",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "prizeReserve",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "roundLength",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "settlePending",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "inputs": [
             {
               "internalType": "uint8",
-              "name": "tile",
+              "name": "hexId",
               "type": "uint8"
             },
             {
@@ -1021,25 +1396,70 @@
               "type": "uint256"
             }
           ],
-          "name": "play",
-          "outputs": [
-            {
-              "internalType": "uint8",
-              "name": "drawnTile",
-              "type": "uint8"
-            },
-            {
-              "internalType": "uint256",
-              "name": "pointsWon",
-              "type": "uint256"
-            }
-          ],
+          "name": "stake",
+          "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "player",
+              "type": "address"
+            }
+          ],
+          "name": "stakesOf",
+          "outputs": [
+            {
+              "internalType": "uint256[6]",
+              "name": "",
+              "type": "uint256[6]"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "inputs": [],
-          "name": "roundsPlayed",
+          "name": "treasury",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "usdc",
+          "outputs": [
+            {
+              "internalType": "contract IERC20",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "usdcWonOf",
           "outputs": [
             {
               "internalType": "uint256",
@@ -1058,6 +1478,30 @@
               "internalType": "contract SmemVault",
               "name": "",
               "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "roundId",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "wonInRound",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
             }
           ],
           "stateMutability": "view",

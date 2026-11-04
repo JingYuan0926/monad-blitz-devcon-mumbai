@@ -10,29 +10,48 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 
 ## Live on Monad Testnet
 
-- **Live app:** _not hosted yet_
+- **Live app:** <https://morney.fun> (hosted on Railway; backup URL: <https://web-production-aabfb.up.railway.app>)
 - **Network:** Monad Testnet (chain ID 10143)
 
 | Contract | Address | Source |
 | --- | --- | --- |
-| SmemVault | [`0xd1204811989616d1b92efb8730591c67703b4e9c`](https://testnet.monadexplorer.com/address/0xd1204811989616d1b92efb8730591c67703b4e9c) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xd1204811989616d1b92efb8730591c67703b4e9c) |
-| HexGame | [`0xc7d030468a0c95662e067243e81f7bd7c9e6510e`](https://testnet.monadexplorer.com/address/0xc7d030468a0c95662e067243e81f7bd7c9e6510e) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xc7d030468a0c95662e067243e81f7bd7c9e6510e) |
-| MockUSDC (tUSDC) | [`0x3ba77514287ff71f9d93ef011b84bf378a35036a`](https://testnet.monadexplorer.com/address/0x3ba77514287ff71f9d93ef011b84bf378a35036a) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x3ba77514287ff71f9d93ef011b84bf378a35036a) |
+| SmemVault | [`0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914`](https://testnet.monadexplorer.com/address/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) |
+| HexGame | [`0x6a27d7ecd48da8f4d5c358732c522385e2947b30`](https://testnet.monadexplorer.com/address/0x6a27d7ecd48da8f4d5c358732c522385e2947b30) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x6a27d7ecd48da8f4d5c358732c522385e2947b30) |
+| MockUSDC (USDC) | [`0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907`](https://testnet.monadexplorer.com/address/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) |
 
 ### What works today
 
 1. Connect MetaMask. The app asks MetaMask to switch to Monad Testnet.
-2. Click **Get 1,000 test USDC** to mint tUSDC. tUSDC has no value.
-3. Deposit tUSDC into the vault. You can withdraw your full deposit at any time.
-4. Watch your Tickets grow. 1 tUSDC earns 10 Tickets per hour.
-5. Play **Hex Spin**. Pick a tile from 1 to 6 and stake Tickets. The game burns the stake.
-6. If the drawn tile matches your pick, you win stake × 6 Prize Points.
+2. Click **Get 1,000 USDC** to mint test USDC. This USDC is a test token with no value.
+3. Deposit USDC into the vault. You can withdraw your full deposit at any time.
+4. Wait for the day to end. Tickets arrive only at the end of each day.
+5. Play the **Hex Yield Draw**. Pick a hex from 1 to 6 and stake Tickets. The game spends the staked Tickets.
+6. The first stake starts a 30-second round with a yield pool in USDC. The pool builds up while the round runs. When the round ends, one hex wins at random.
+7. Morney keeps 5% of the pool. Players on the winning hex split the other 95% by their share of that hex. The USDC goes straight to their wallets.
+8. If nobody is on the winning hex, the pool stays in the reserve.
+9. After the draw, the board stops on the result. The next stake starts the next round.
 
-The game can burn Tickets and award Prize Points. It cannot move USDC. Only the depositor can withdraw their deposit.
+**How Tickets work:** 10 USDC held for a full day earns 1 Ticket when the day ends. For example, 100 USDC earns 10 Tickets per day. Each day pays the lowest balance you held during that day. A deposit starts to earn on the next full day. In this demo, **1 day = 10 seconds**. The page shows your Tickets per day and a countdown to the end of the day.
+
+**Hex Yield Draw example:** The round's yield pool is 8.00 USDC. You stake 5 Tickets on hex 3, and another player stakes 15 Tickets on hex 3. Hex 3 wins. Morney keeps 0.40 USDC (5%). Hex 3 shares 7.60 USDC: you get 7.60 × 5 ÷ 20 = 1.90 USDC, and the other player gets 5.70 USDC.
+
+The game can spend Tickets and pay out the yield pool. It cannot touch anyone's savings. Only the depositor can withdraw their deposit. Only the depositor can withdraw their deposit.
+
+### Play games with your Tickets
+
+Your savings earn Tickets. Use your Tickets to play games, including casino games. Winners share the yield that everyone's savings earn.
+
+| Game | Type | Status |
+| --- | --- | --- |
+| Hex Yield Draw | Casino: stake Tickets on 1 of 6 hexes. The winning hex of each round splits the yield pool by share. | Live on testnet |
+| More casino games, such as dice, roulette and slots | Casino | Planned |
+| Daily prediction challenges | Prediction | Planned |
+
+Every game uses the same Tickets. A loss costs only Tickets, never your savings.
 
 The vault contract is named `SmemVault` because we deployed it before the project rename. The contract name does not change how it works.
 
-**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only.
+**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each round's yield pool is a simulated random amount from 1 to 10 USDC, paid from a prize reserve. In production, the pool is the real yield that the vault earns on Aave.
 
 ## Run it yourself
 
@@ -55,6 +74,7 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 5. Deploy: `npm run deploy`. This writes the new addresses to `src/contracts/deployment.json`.
 6. Verify the source: `npm run verify`
 7. Run the full flow on chain: `npm run smoke`
+8. Draw each round as soon as it ends: `npm run keeper`. Without the keeper, the next stake settles the old rounds.
 
 ## Project layout
 
