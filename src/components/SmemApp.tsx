@@ -100,6 +100,7 @@ export function SmemApp() {
       { ...hexGame, functionName: "prizeReserve" },
       { ...hexGame, functionName: "currentRoundId" },
       { ...hexGame, functionName: "currentStakesOf", args: [user] },
+      { ...vault, functionName: "currentDay" },
     ],
     // keepPreviousData keeps the old numbers on screen while a new read loads.
     query: { enabled: ready && now > 0, refetchInterval: 2000, placeholderData: keepPreviousData },
@@ -125,8 +126,10 @@ export function SmemApp() {
   const currentId = value(10);
   const myStakes = (reads.data?.[11]?.result as readonly bigint[] | undefined) ?? ZERO_STAKES;
 
-  // Show new Tickets the moment a day ends. The chain read follows a second or two later.
-  const readDay = reads.dataUpdatedAt ? Math.floor(reads.dataUpdatedAt / 1000 / DAY_LENGTH) : dayIndex;
+  // Show new Tickets the moment a day ends. The chain's latest block can lag the browser clock by a second or
+  // two, so compare with the day of the block that the read came from, not the time of the read.
+  const chainDay = reads.data?.[12]?.result as bigint | undefined;
+  const readDay = chainDay !== undefined ? Number(chainDay) : dayIndex;
   const daysSinceRead = Math.max(0, dayIndex - readDay);
   const shownTickets =
     tickets + (daysSinceRead > 0 ? ticketsAtDayEnd + ticketsPerDay * BigInt(daysSinceRead - 1) : 0n);
