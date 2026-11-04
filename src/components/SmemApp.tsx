@@ -207,7 +207,8 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   }
 
   async function onConnect() {
-    const metaMask = connectors[0];
+    // Prefer MetaMask's own EIP-6963 connector, so Phantom does not ask which wallet to use.
+    const metaMask = connectors.find((c) => c.id === "io.metamask") ?? connectors[0];
     if (!metaMask) return setError("MetaMask is not installed in this browser.");
     setBusy("connect");
     setError(null);

@@ -12,6 +12,7 @@ import {
   type EIP1193Provider,
 } from "viem";
 
+import { getMetaMask } from "@/lib/metamask";
 import { activeChain as monad, deployment } from "@/lib/network";
 import type { Action, Card, HandResult, PublicBlackjackState, Rank, Suit } from "@/lib/game/blackjack";
 import { colorOf, PAYOUTS, type PocketColor, type RouletteBet, type SettledBet } from "@/lib/game/roulette";
@@ -77,7 +78,7 @@ const BET_CODE: Partial<Record<RouletteBet["kind"], number>> = {
 const history: number[] = [];
 
 async function wallet() {
-  const eth = (globalThis as { ethereum?: EIP1193Provider }).ethereum;
+  const eth = (await getMetaMask()) as EIP1193Provider | undefined;
   if (!eth) throw new Error("Install MetaMask to play on Monad.");
   const client = createWalletClient({ chain: monad, transport: custom(eth) });
   let [account] = await client.getAddresses();
@@ -90,6 +91,14 @@ async function wallet() {
     }
   }
   return { client, account };
+}
+
+/// The account MetaMask already allows for this site. It never opens a popup.
+async function connectedAccount(): Promise<Address | undefined> {
+  const eth = await getMetaMask();
+  if (!eth) return undefined;
+  const accounts = (await eth.request({ method: "eth_accounts" }).catch(() => [])) as Address[];
+  return accounts[0];
 }
 
 async function player(account: Address): Promise<PlayerSummary> {
@@ -189,7 +198,8 @@ async function blackjackView(account: Address): Promise<BlackjackView> {
 
 export const api = {
   async roulette(): Promise<RouletteState> {
-    const { account } = await wallet();
+    const account = await connectedAccount();
+    if (!account) throw new Error("Connect MetaMask to play.");
     return { player: await player(account), history: [...history] };
   },
 
@@ -228,7 +238,8 @@ export const api = {
   },
 
   async blackjack(): Promise<BlackjackView> {
-    const { account } = await wallet();
+    const account = await connectedAccount();
+    if (!account) throw new Error("Connect MetaMask to play.");
     return blackjackView(account);
   },
 

@@ -6,14 +6,8 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { Wordmark } from "@/components/Logo";
+import { getMetaMask, type Eth } from "@/lib/metamask";
 import { activeChain, NETWORK, rpcFor, setNetwork } from "@/lib/network";
-
-type Eth = {
-  request: (a: { method: string; params?: unknown[] }) => Promise<unknown>;
-  on?: (event: string, cb: (...args: unknown[]) => void) => void;
-  removeListener?: (event: string, cb: (...args: unknown[]) => void) => void;
-};
-const getEth = () => (typeof window === "undefined" ? undefined : (window as { ethereum?: Eth }).ethereum);
 
 const NAV = [
   { href: "/savings", label: "Savings" },
@@ -57,20 +51,24 @@ export function SiteHeader() {
 
   // Read the connected account, and follow account changes in MetaMask.
   useEffect(() => {
-    const eth = getEth();
-    if (!eth) return;
+    let eth: Eth | undefined;
     const update = (accs: unknown) => setAccount(((accs as string[]) ?? [])[0] ?? null);
-    eth.request({ method: "eth_accounts" }).then(update).catch(() => {});
     const onChange = (accs: unknown) => {
       update(accs);
       window.location.reload();
     };
-    eth.on?.("accountsChanged", onChange);
-    return () => eth.removeListener?.("accountsChanged", onChange);
+    getMetaMask().then((found) => {
+      eth = found;
+      if (!eth) return;
+      // eth_accounts never opens a popup. It returns the account MetaMask already allows for this site.
+      eth.request({ method: "eth_accounts" }).then(update).catch(() => {});
+      eth.on?.("accountsChanged", onChange);
+    });
+    return () => eth?.removeListener?.("accountsChanged", onChange);
   }, []);
 
   async function connect() {
-    const eth = getEth();
+    const eth = await getMetaMask();
     if (!eth) return setError("Install MetaMask to play.");
     setBusy(true);
     setError(null);

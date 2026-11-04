@@ -33,8 +33,8 @@ export async function setNetwork(n: NetworkName) {
   } catch {
     // Storage is blocked. The page stays on the current network.
   }
-  const eth = (window as { ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> } })
-    .ethereum;
+  const { getMetaMask } = await import("@/lib/metamask");
+  const eth = await getMetaMask();
   const target = chainFor(n);
   if (eth) {
     const chainId = `0x${target.id.toString(16)}`;
