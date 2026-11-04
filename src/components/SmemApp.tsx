@@ -484,9 +484,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               </p>
               <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Savings</h3>
             </div>
-            <button className="text-sm text-accent-strong hover:underline disabled:opacity-40" onClick={onFaucet} disabled={!ready || !!busy}>
-              {busy === "faucet" ? "Minting…" : `Get 1,000 ${TOKEN_SYMBOL}`}
-            </button>
+
           </div>
           <p className="mt-1 text-sm text-muted">
             Every 100 USDC you hold for a full day earns 1 Ticket when the day ends. Withdraw your full deposit at any
@@ -521,6 +519,14 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               {busy === "withdraw" ? "Withdrawing…" : "Withdraw"}
             </button>
           </div>
+          {/* Faucet: mints demo tokens to your wallet so you can try the app. */}
+          <button
+            className="mt-2 flex w-full items-center justify-center gap-2 border border-dashed border-accent/60 bg-accent/5 px-4 py-3 font-mono text-xs uppercase tracking-[0.08em] text-accent transition hover:bg-accent/10 disabled:cursor-not-allowed disabled:opacity-40"
+            onClick={onFaucet}
+            disabled={!ready || !!busy}
+          >
+            {busy === "faucet" ? "Minting…" : `Faucet · Get 1,000 ${TOKEN_SYMBOL}`}
+          </button>
 
           <dl className="mt-5 space-y-2 border-t border-border pt-4 text-sm">
             <Row label="Total saved by everyone" value={`${fmt(Number(formatUnits(totalPrincipal, USDC_DECIMALS)))} USDC`} />

@@ -8,9 +8,9 @@ export type NetworkName = "mainnet" | "testnet";
 
 const STORAGE_KEY = "morney-network";
 
-// The app is locked to Monad Mainnet for the demo. The testnet contracts stay in deployment.testnet.json.
+// Each site is built for one network. morney.fun is mainnet. testnet.morney.fun sets NEXT_PUBLIC_NETWORK=testnet.
 function readNetwork(): NetworkName {
-  return "mainnet";
+  return process.env.NEXT_PUBLIC_NETWORK === "testnet" ? "testnet" : "mainnet";
 }
 
 export const deployments = { mainnet, testnet };
