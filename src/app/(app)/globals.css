@@ -81,3 +81,36 @@ h3 {
 .hex-rolling {
   animation: spin-glow 0.5s ease-in-out infinite;
 }
+
+/* Accent headline from the landing page: purple shimmer, sliced by a thin cut. */
+.slice-text {
+  background-image:
+    linear-gradient(to bottom, transparent 0 56%, var(--background) 56% 60%, transparent 60% 100%),
+    linear-gradient(100deg, var(--accent) 0%, #a594ff 35%, #85e6ff 55%, #a594ff 75%, var(--accent) 100%);
+  background-size: 100% 100%, 240% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: slice-shimmer 8s ease-in-out infinite alternate;
+}
+
+@keyframes slice-shimmer {
+  from {
+    background-position: 0 0, 0% 0;
+  }
+  to {
+    background-position: 0 0, 100% 0;
+  }
+}
+
+/* Numbered section label from the landing page. */
+.section-label {
+  @apply flex items-center gap-3 font-mono text-xs uppercase tracking-[0.2em] text-muted;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slice-text {
+    animation: none;
+  }
+}
+

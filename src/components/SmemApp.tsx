@@ -325,58 +325,66 @@ export function SmemApp() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
-      {/* Header */}
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+      {/* Header: same bar as the landing page */}
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
+        <nav className="mx-auto flex h-16 max-w-[1400px] items-center justify-between gap-3 px-4 sm:px-6">
           <Link href="/" aria-label="Morney home">
             <Wordmark />
           </Link>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/play"
-            className="rounded-full border border-accent/60 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/10"
-          >
-            Ticket Boosters
-          </Link>
-          <span className="hidden rounded-full border border-border px-3 py-1 text-xs text-muted sm:inline">
-            Monad Testnet
-          </span>
-          {!mounted ? null : !isConnected ? (
+          <div className="hidden items-center gap-8 font-mono text-[13px] uppercase tracking-[0.08em] md:flex">
+            <a href="#savings" className="text-foreground/70 transition-colors hover:text-accent">
+              Savings
+            </a>
+            <a href="#draw" className="text-foreground/70 transition-colors hover:text-accent">
+              Hex Draw
+            </a>
+            <Link href="/play" className="text-foreground/70 transition-colors hover:text-accent">
+              Ticket Boosters
+            </Link>
+            <span className="text-muted">Monad Testnet</span>
+          </div>
+          {!mounted ? (
+            <span className="w-36" />
+          ) : !isConnected ? (
             <button className="btn-primary" onClick={onConnect} disabled={busy === "connect"}>
               {busy === "connect" ? "Connecting…" : "Connect MetaMask"}
             </button>
           ) : wrongChain ? (
             <button className="btn-primary" onClick={onSwitch} disabled={busy === "switch"}>
-              {busy === "switch" ? "Switching…" : "Switch to Monad Testnet"}
+              {busy === "switch" ? "Switching…" : "Switch network"}
             </button>
           ) : (
             <button
-              className="rounded-full border border-border bg-surface px-4 py-2 font-mono text-sm hover:border-accent"
+              className="border border-foreground/15 px-4 py-2.5 font-mono text-xs uppercase tracking-[0.08em] transition-colors hover:border-accent hover:text-accent"
               onClick={() => disconnect.mutate({})}
               title="Disconnect"
             >
               {short(address!)}
             </button>
           )}
-        </div>
+        </nav>
       </header>
+      <div className="h-16" />
 
       {/* Hero */}
-      <section className="mt-8 text-center sm:mt-12">
-        <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-          Your savings stay safe.
-          <br />
-          <span className="text-accent-strong">Your Tickets play.</span>
+      <section className="mt-10 sm:mt-14">
+        <p className="section-label">
+          <span className="text-accent">01</span>
+          <span className="h-px w-8 bg-accent/40" />
+          Your Morney account
+        </p>
+        <h2 className="mt-6 font-display text-[clamp(2.2rem,5.6vw,4.5rem)] font-medium uppercase leading-[0.98] tracking-[-0.03em]">
+          <span className="block">Your savings stay safe.</span>
+          <span className="slice-text block pr-[0.1em] italic">Your Tickets play.</span>
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-sm text-muted sm:text-base">
-          Deposit USDC. Earn Tickets at the end of every day. Stake Tickets on a hex to win the daily yield pool. A
+        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted">
+          Deposit USDC. Earn Tickets at the end of every day. Stake Tickets on the hexes to win the daily yield pool. A
           loss costs Tickets, never your deposit.
         </p>
       </section>
 
       {ready && legacyTotal > 0n && (
-        <div className="mt-6 flex flex-col gap-3 rounded-2xl border border-accent/60 bg-accent/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-6 flex flex-col gap-3 border border-accent/60 bg-accent/10 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm">
             You have <span className="font-semibold">{fmt(Number(formatUnits(legacyTotal, USDC_DECIMALS)))} USDC</span>{" "}
             in an old Morney vault from an earlier deploy. Move it to the current vault to earn Tickets.
@@ -388,7 +396,7 @@ export function SmemApp() {
       )}
 
       {/* Stats */}
-      <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <section className="mt-10 grid grid-cols-2 border-l border-t border-border sm:grid-cols-4">
         <Stat label="Wallet" value={ready ? fmt(Number(formatUnits(walletUsdc, USDC_DECIMALS))) : "—"} unit="USDC" />
         <Stat label="Saved" value={ready ? fmt(Number(formatUnits(principal, USDC_DECIMALS))) : "—"} unit="USDC" />
         <Stat
@@ -409,7 +417,7 @@ export function SmemApp() {
       </section>
 
       {!ready && mounted && (
-        <div className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
+        <div className="mt-6 border border-dashed border-border p-6 text-center text-sm text-muted">
           {wrongChain ? "Switch MetaMask to Monad Testnet to continue." : "Connect MetaMask to start saving and playing."}
         </div>
       )}
@@ -417,9 +425,16 @@ export function SmemApp() {
       {/* Main */}
       <section className="mt-6 grid gap-4 md:grid-cols-[1fr_1.3fr]">
         {/* Savings */}
-        <div className="card">
+        <div id="savings" className="card scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Savings</h3>
+            <div>
+              <p className="section-label">
+                <span className="text-accent">02</span>
+                <span className="h-px w-6 bg-accent/40" />
+                Vault
+              </p>
+              <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Savings</h3>
+            </div>
             <button className="text-sm text-accent-strong hover:underline disabled:opacity-40" onClick={onFaucet} disabled={!ready || !!busy}>
               {busy === "faucet" ? "Minting…" : "Get 1,000 USDC"}
             </button>
@@ -442,7 +457,7 @@ export function SmemApp() {
               placeholder="100"
             />
             <button
-              className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground disabled:opacity-40"
+              className="border border-border px-3 font-mono text-xs text-muted hover:border-accent hover:text-accent disabled:opacity-40"
               disabled={!ready}
               onClick={() => setAmount(formatUnits(walletUsdc, USDC_DECIMALS))}
             >
@@ -467,10 +482,17 @@ export function SmemApp() {
         </div>
 
         {/* Game */}
-        <div className="card">
+        <div id="draw" className="card scroll-mt-20">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Hex Yield Draw</h3>
-            <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
+            <div>
+              <p className="section-label">
+                <span className="text-accent">03</span>
+                <span className="h-px w-6 bg-accent/40" />
+                Daily draw
+              </p>
+              <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Hex Yield Draw</h3>
+            </div>
+            <span className="border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted">
               Day {currentId.toString()} · {revealing ? "drawing" : settled ? "drawn" : "open"}
             </span>
           </div>
@@ -479,9 +501,9 @@ export function SmemApp() {
             of the hex. Morney keeps 5%.
           </p>
 
-          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 rounded-xl bg-surface-2 px-4 py-3">
+          <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 border border-accent/30 bg-accent/5 px-4 py-4">
             <span className="text-sm text-muted">Today&apos;s total yield (estimate)</span>
-            <span className="font-mono text-lg tabular-nums text-accent-strong">{usdcText(roundPool)} USDC</span>
+            <span className="font-display text-2xl font-medium tabular-nums text-accent">{usdcText(roundPool)} USDC</span>
           </div>
 
           <div className="mt-4 grid grid-cols-3 justify-items-center gap-x-2 gap-y-3">
@@ -529,7 +551,7 @@ export function SmemApp() {
           </p>
 
           {revealing ? (
-            <div aria-live="polite" className="mt-4 rounded-xl border border-accent/60 bg-accent/10 px-4 py-4 text-center text-sm">
+            <div aria-live="polite" className="mt-4 border border-accent/60 bg-accent/10 px-4 py-4 text-center text-sm">
               {busy === "play" ? "Confirm in MetaMask, then the draw runs on chain…" : `Drawing the winning hex… ${revealSeconds}s`}
             </div>
           ) : !settled ? (
@@ -549,7 +571,7 @@ export function SmemApp() {
                 {[1, 5, 10].map((n) => (
                   <button
                     key={n}
-                    className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground"
+                    className="border border-border px-3 font-mono text-xs text-muted hover:border-accent hover:text-accent"
                     onClick={() => setPlanFor(tile, String(Number(plan[tile - 1] || 0) + n))}
                   >
                     +{n}
@@ -588,7 +610,7 @@ export function SmemApp() {
               </label>
             </>
           ) : (
-            <div aria-live="polite" className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+            <div aria-live="polite" className="mt-4 border border-border px-4 py-3 text-sm">
               <div>
                 Hex <span className="font-semibold">{winningHex}</span> won today&apos;s{" "}
                 <span className="font-mono">{usdcText(roundPool)} USDC</span>
@@ -658,9 +680,11 @@ function safeParse(value: string, decimals: number) {
 
 function Stat({ label, value, unit, highlight }: { label: string; value: string; unit: string; highlight?: boolean }) {
   return (
-    <div className={`border p-4 ${highlight ? "border-accent bg-accent/5" : "border-border bg-background/80"}`}>
-      <div className="text-xs uppercase tracking-wider text-muted">{label}</div>
-      <div className="mt-1 font-mono text-xl tabular-nums sm:text-2xl">{value}</div>
+    <div className={`border-b border-r border-border p-5 sm:p-6 ${highlight ? "bg-accent/5" : "bg-background/70"}`}>
+      <div className={`font-mono text-[11px] uppercase tracking-[0.18em] ${highlight ? "text-accent" : "text-muted"}`}>
+        {label}
+      </div>
+      <div className="mt-4 font-display text-2xl font-medium tabular-nums sm:text-3xl">{value}</div>
       <div className="mt-0.5 truncate text-xs text-muted">{unit}</div>
     </div>
   );
