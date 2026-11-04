@@ -59,7 +59,7 @@ export default function CasinoPage() {
               <div className="text-xs text-muted">Save more. Play more.</div>
             </div>
           </Link>
-          <Link href="/" className="btn-secondary">
+          <Link href="/app" className="btn-secondary">
             ← Back to savings
           </Link>
         </header>
