@@ -15,7 +15,7 @@ const NAV_LINKS = [
 
 const EXTERNAL_LINKS = [{ label: "Docs", href: "#" }];
 
-const LAUNCH_HREF = "#";
+const LAUNCH_HREF = "/play";
 
 export function ArrowUpRight({ className }: { className?: string }) {
   return (

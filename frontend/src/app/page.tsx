@@ -120,7 +120,7 @@ export default function Home() {
               </p>
 
               <div className="rise mt-10 flex flex-wrap gap-3 [animation-delay:480ms]">
-                <a href="#" className={primaryButton}>
+                <a href="/play" className={primaryButton}>
                   Start saving
                   <ArrowUpRight className="size-4" />
                 </a>
@@ -397,7 +397,7 @@ export default function Home() {
               more money for our users.
             </p>
             <a
-              href="#"
+              href="/play"
               className="relative mt-10 inline-flex items-center gap-2 bg-primary px-6 py-3.5 font-mono text-sm uppercase tracking-[0.08em] text-white transition-[background-color,color,transform] hover:bg-white hover:text-foreground active:scale-[0.97]"
             >
               Launch App
