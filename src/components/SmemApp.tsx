@@ -658,7 +658,7 @@ function safeParse(value: string, decimals: number) {
 
 function Stat({ label, value, unit, highlight }: { label: string; value: string; unit: string; highlight?: boolean }) {
   return (
-    <div className={`rounded-2xl border p-4 ${highlight ? "border-accent/60 bg-accent/10" : "border-border bg-surface"}`}>
+    <div className={`border p-4 ${highlight ? "border-accent bg-accent/5" : "border-border bg-background/80"}`}>
       <div className="text-xs uppercase tracking-wider text-muted">{label}</div>
       <div className="mt-1 font-mono text-xl tabular-nums sm:text-2xl">{value}</div>
       <div className="mt-0.5 truncate text-xs text-muted">{unit}</div>
