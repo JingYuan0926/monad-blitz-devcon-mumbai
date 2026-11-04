@@ -28,6 +28,13 @@ export default defineConfig({
       url: process.env.MONAD_TESTNET_RPC_URL ?? "https://testnet-rpc.monad.xyz",
       accounts: [configVariable("PRIVATE_KEY")],
     },
+    monadMainnet: {
+      type: "http",
+      chainType: "l1",
+      chainId: 143,
+      url: process.env.MONAD_MAINNET_RPC_URL ?? "https://rpc.monad.xyz",
+      accounts: [configVariable("PRIVATE_KEY")],
+    },
   },
   verify: {
     sourcify: {

@@ -32,7 +32,7 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 
 | Item | Link |
 | --- | --- |
-| Post on X / LinkedIn (tags @monad, @monad_dev, @geeky_kartikey) | _add link_ |
+| Post on X / LinkedIn (tags @monad, @monad_dev, @geeky_kartikey) | <https://x.com/ilovetofupeach/status/2117930357781942726> |
 | Demo video (30 s+, product running) | _add link_ |
 | Product ad video | _add link_ |
 | Combined views at 5:45 PM IST | _add number_ |

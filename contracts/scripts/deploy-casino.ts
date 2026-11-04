@@ -9,7 +9,7 @@ import { verifyContract } from "@nomicfoundation/hardhat-verify/verify";
 import { getAddress } from "viem";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const file = path.resolve(here, "../../src/contracts/deployment.json");
+const file = path.resolve(here, "../..", process.env.DEPLOYMENT_FILE ?? "src/contracts/deployment.json");
 const deployment = JSON.parse(await readFile(file, "utf8"));
 
 const { viem } = await network.create();

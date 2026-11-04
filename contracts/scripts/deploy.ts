@@ -10,7 +10,8 @@ import { network } from "hardhat";
 import { getAddress, parseUnits } from "viem";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const outFile = path.resolve(here, "../../src/contracts/deployment.json");
+// DEPLOYMENT_FILE lets a mainnet deploy write its own file, so the testnet app keeps its addresses.
+const outFile = path.resolve(here, "../..", process.env.DEPLOYMENT_FILE ?? "src/contracts/deployment.json");
 
 // Tickets that 1 USDC earns for 1 full day. 0.01 means 100 USDC earns 1 Ticket per day.
 const TICKETS_PER_USDC_PER_DAY = process.env.TICKETS_PER_USDC_PER_DAY ?? "0.01";
@@ -94,8 +95,12 @@ if (process.env.VAULT_ADDRESS && oldGame && getAddress(oldGame) !== getAddress(g
 }
 
 // Fund the prize reserve. The owner mints test USDC straight to the game.
-await wait(await usdc.write.mint([game.address, PRIZE_RESERVE]));
-console.log(`Prize reserve: ${PRIZE_RESERVE / 10n ** 6n} USDC`);
+if (process.env.SKIP_RESERVE) {
+  console.log("Prize reserve: skipped (SKIP_RESERVE is set).");
+} else {
+  await wait(await usdc.write.mint([game.address, PRIZE_RESERVE]));
+}
+if (!process.env.SKIP_RESERVE) console.log(`Prize reserve: ${PRIZE_RESERVE / 10n ** 6n} USDC`);
 
 async function abiOf(name: string) {
   const artifact = JSON.parse(

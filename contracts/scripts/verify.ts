@@ -9,7 +9,7 @@ import { verifyContract } from "@nomicfoundation/hardhat-verify/verify";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const deployment = JSON.parse(
-  await readFile(path.resolve(here, "../../src/contracts/deployment.json"), "utf8"),
+  await readFile(path.resolve(here, "../..", process.env.DEPLOYMENT_FILE ?? "src/contracts/deployment.json"), "utf8"),
 );
 
 const targets: Array<[string, unknown[]]> = [
