@@ -496,7 +496,6 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             <Row label="Total saved by everyone" value={`${fmt(Number(formatUnits(totalPrincipal, USDC_DECIMALS)))} USDC`} />
             <Row label="Your Tickets per day" value={fmt(toTickets(ticketsPerDay))} />
             <Row label="Day length (demo)" value={`${DAY_LENGTH} seconds`} />
-            <Row label="Yield source" value="Simulated (demo)" />
           </dl>
         </div>
 
