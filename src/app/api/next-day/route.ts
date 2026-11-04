@@ -1,6 +1,6 @@
 import { createPublicClient, createWalletClient, http, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { monadTestnet } from "viem/chains";
+import { monad } from "viem/chains";
 
 import { hexGame } from "@/lib/contracts";
 
@@ -10,9 +10,9 @@ export async function POST() {
   const key = process.env.RELAYER_PRIVATE_KEY as Hex | undefined;
   if (!key) return Response.json({ error: "The relayer is not set up." }, { status: 500 });
 
-  const transport = http(process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://testnet-rpc.monad.xyz");
-  const publicClient = createPublicClient({ chain: monadTestnet, transport });
-  const wallet = createWalletClient({ account: privateKeyToAccount(key), chain: monadTestnet, transport });
+  const transport = http(process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://rpc.monad.xyz");
+  const publicClient = createPublicClient({ chain: monad, transport });
+  const wallet = createWalletClient({ account: privateKeyToAccount(key), chain: monad, transport });
 
   const id = (await publicClient.readContract({ ...hexGame, functionName: "currentRoundId" })) as bigint;
   const round = (await publicClient.readContract({ ...hexGame, functionName: "getRound", args: [id] })) as readonly [

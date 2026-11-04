@@ -1,21 +1,25 @@
 {
-  "chainId": 10143,
-  "network": "monadTestnet",
-  "deployedAt": "2026-11-04T11:50:27.366Z",
-  "startBlock": "76907938",
+  "chainId": 143,
+  "network": "monadMainnet",
+  "deployedAt": "2026-11-04T12:15:57.756Z",
+  "startBlock": "119324171",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
   "dayLengthSeconds": 10,
   "constructorArgs": {
+    "MockUSDC": [
+      "Morney Demo USD",
+      "mUSD"
+    ],
     "SmemVault": [
-      "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
+      "0x3ba77514287ff71f9d93ef011b84bf378a35036a",
       6,
       "10000000000000000",
       "10",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f"
     ],
     "HexGame": [
-      "0x6B3067314c8F76eFb6AC9da6EC263eb933F428df",
-      "0xe0599E3D4F799Dd051Ea9B9c2Db2d245b1796B92",
+      "0xd1204811989616d1b92efb8730591c67703b4e9c",
+      "0x3ba77514287ff71f9d93ef011b84bf378a35036a",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
       "1000000000",
       "5000000000",
@@ -25,10 +29,21 @@
   },
   "contracts": {
     "MockUSDC": {
-      "address": "0xe0599E3D4F799Dd051Ea9B9c2Db2d245b1796B92",
+      "address": "0x3ba77514287ff71f9d93ef011b84bf378a35036a",
       "abi": [
         {
-          "inputs": [],
+          "inputs": [
+            {
+              "internalType": "string",
+              "name": "name_",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "symbol_",
+              "type": "string"
+            }
+          ],
           "stateMutability": "nonpayable",
           "type": "constructor"
         },
@@ -399,7 +414,7 @@
       ]
     },
     "SmemVault": {
-      "address": "0x6B3067314c8F76eFb6AC9da6EC263eb933F428df",
+      "address": "0xd1204811989616d1b92efb8730591c67703b4e9c",
       "abi": [
         {
           "inputs": [
@@ -1034,7 +1049,7 @@
       ]
     },
     "HexGame": {
-      "address": "0x1237eb3b8c735de71370dadc56e7325da5cc3260",
+      "address": "0xc7d030468a0c95662e067243e81f7bd7c9e6510e",
       "abi": [
         {
           "inputs": [
@@ -1617,10 +1632,10 @@
   },
   "casino": {
     "TicketRoulette": {
-      "address": "0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3"
+      "address": "0xc124324af5dcd2ed15aa791c05ec33930157335d"
     },
     "TicketBlackjack": {
-      "address": "0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c"
+      "address": "0xbc707050e5b164c7d5ad28488b4bbb1b70a8c490"
     }
   }
 }

@@ -435,7 +435,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
 
       {!ready && mounted && (
         <div className="mt-6 border border-dashed border-border p-6 text-center text-sm text-muted">
-          {wrongChain ? "Switch MetaMask to Monad Testnet to continue." : "Connect MetaMask to start saving and playing."}
+          {wrongChain ? "Switch MetaMask to Monad Mainnet to continue." : "Connect MetaMask to start saving and playing."}
         </div>
       )}
 
@@ -455,7 +455,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Savings</h3>
             </div>
             <button className="text-sm text-accent-strong hover:underline disabled:opacity-40" onClick={onFaucet} disabled={!ready || !!busy}>
-              {busy === "faucet" ? "Minting…" : "Get 1,000 USDC"}
+              {busy === "faucet" ? "Minting…" : "Get 1,000 mUSD"}
             </button>
           </div>
           <p className="mt-1 text-sm text-muted">
@@ -496,7 +496,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             <Row label="Total saved by everyone" value={`${fmt(Number(formatUnits(totalPrincipal, USDC_DECIMALS)))} USDC`} />
             <Row label="Your Tickets per day" value={fmt(toTickets(ticketsPerDay))} />
             <Row label="Day length (demo)" value={`${DAY_LENGTH} seconds`} />
-            <Row label="Yield source" value="Simulated (testnet)" />
+            <Row label="Yield source" value="Simulated (demo)" />
           </dl>
         </div>
 
@@ -690,10 +690,10 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <ContractLink name="SmemVault" address={vault.address} />
           <ContractLink name="HexGame" address={hexGame.address} />
-          <ContractLink name="USDC" address={usdc.address} />
+          <ContractLink name="mUSD" address={usdc.address} />
         </div>
         <p className="mt-3">
-          Testnet demo. This USDC is a test token with no value. The hex draw uses block data and is not safe for real prizes.
+          Demo on Monad Mainnet. mUSD (Morney Demo USD) is a demo token with no value. The hex draw uses block data and is not safe for real prizes.
         </p>
       </footer>
     </div>

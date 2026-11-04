@@ -1,5 +1,5 @@
 // On-chain adapter for the Roulette and Blackjack screens.
-// The screens keep the same API, but every call now reads or writes the Monad Testnet contracts through MetaMask.
+// The screens keep the same API, but every call now reads or writes the Monad Mainnet contracts through MetaMask.
 import {
   createPublicClient,
   createWalletClient,
@@ -11,7 +11,7 @@ import {
   type Address,
   type EIP1193Provider,
 } from "viem";
-import { monadTestnet } from "viem/chains";
+import { monad } from "viem/chains";
 
 import deployment from "@/contracts/deployment.json";
 import type { Action, Card, HandResult, PublicBlackjackState, Rank, Suit } from "@/lib/game/blackjack";
@@ -62,7 +62,7 @@ const VAULT = deployment.contracts.SmemVault.address as Address;
 const ROULETTE = deployment.casino.TicketRoulette.address as Address;
 const BLACKJACK = deployment.casino.TicketBlackjack.address as Address;
 
-const publicClient = createPublicClient({ chain: monadTestnet, transport: http() });
+const publicClient = createPublicClient({ chain: monad, transport: http() });
 
 // Roulette bet kinds that the contract supports, mapped to its bet codes.
 const BET_CODE: Partial<Record<RouletteBet["kind"], number>> = {
@@ -79,15 +79,15 @@ const history: number[] = [];
 
 async function wallet() {
   const eth = (globalThis as { ethereum?: EIP1193Provider }).ethereum;
-  if (!eth) throw new Error("Install MetaMask to play on Monad Testnet.");
-  const client = createWalletClient({ chain: monadTestnet, transport: custom(eth) });
+  if (!eth) throw new Error("Install MetaMask to play on Monad.");
+  const client = createWalletClient({ chain: monad, transport: custom(eth) });
   let [account] = await client.getAddresses();
   if (!account) [account] = await client.requestAddresses();
-  if ((await client.getChainId()) !== monadTestnet.id) {
+  if ((await client.getChainId()) !== monad.id) {
     try {
-      await client.switchChain({ id: monadTestnet.id });
+      await client.switchChain({ id: monad.id });
     } catch {
-      await client.addChain({ chain: monadTestnet });
+      await client.addChain({ chain: monad });
     }
   }
   return { client, account };

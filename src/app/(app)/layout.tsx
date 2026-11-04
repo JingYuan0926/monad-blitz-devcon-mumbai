@@ -11,7 +11,7 @@ const robotoMono = Roboto_Mono({ variable: "--font-roboto-mono", subsets: ["lati
 
 export const metadata: Metadata = {
   title: "Morney — More and More Money",
-  description: "Deposit USDC, earn Tickets over time, and play the hex game on Monad Testnet.",
+  description: "Deposit USDC, earn Tickets over time, and play the Hex Yield Draw on Monad.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

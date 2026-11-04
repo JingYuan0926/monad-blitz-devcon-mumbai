@@ -1,15 +1,16 @@
 import { createConfig, http } from "wagmi";
-import { monadTestnet } from "wagmi/chains";
+import { monad } from "wagmi/chains";
 import { injected } from "wagmi/connectors";
 
-export const chain = monadTestnet;
+// The app runs on Monad Mainnet. The testnet addresses are kept in src/contracts/deployment.testnet.json.
+export const chain = monad;
 
 export const config = createConfig({
-  chains: [monadTestnet],
+  chains: [monad],
   // The injected connector talks to the MetaMask browser extension directly.
   connectors: [injected({ target: "metaMask" })],
   transports: {
-    [monadTestnet.id]: http(process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://testnet-rpc.monad.xyz"),
+    [monad.id]: http(process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://rpc.monad.xyz"),
   },
   ssr: true,
 });
@@ -20,6 +21,6 @@ declare module "wagmi" {
   }
 }
 
-export const explorer = monadTestnet.blockExplorers.default.url;
+export const explorer = monad.blockExplorers.default.url;
 export const txUrl = (hash: string) => `${explorer}/tx/${hash}`;
 export const addressUrl = (address: string) => `${explorer}/address/${address}`;
