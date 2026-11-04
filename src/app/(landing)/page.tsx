@@ -5,7 +5,7 @@ import { ArrowUpRight, Navbar } from "@/components/Navbar";
 const HERO_STATS = [
   { label: "Prize pool", value: "95% of yield" },
   { label: "Platform fee", value: "5% of yield" },
-  { label: "Principal wagered", value: "$0" },
+  { label: "Total yield (demo)", value: "$318,640" },
 ];
 
 const STEPS = [
