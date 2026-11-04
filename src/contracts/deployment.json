@@ -1,11 +1,10 @@
 {
   "chainId": 10143,
   "network": "monadTestnet",
-  "deployedAt": "2026-11-04T10:57:21.911Z",
-  "startBlock": "76897578",
+  "deployedAt": "2026-11-04T11:07:05.793Z",
+  "startBlock": "76899486",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
   "dayLengthSeconds": 10,
-  "roundLengthSeconds": 30,
   "constructorArgs": {
     "SmemVault": [
       "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
@@ -20,7 +19,8 @@
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
       "1000000",
       "10000000",
-      "30"
+      "5",
+      "120"
     ]
   },
   "contracts": {
@@ -998,7 +998,7 @@
       ]
     },
     "HexGame": {
-      "address": "0x6a27d7ecd48da8f4d5c358732c522385e2947b30",
+      "address": "0x096311607135e063ec669bf7d4abf77e634d6225",
       "abi": [
         {
           "inputs": [
@@ -1029,12 +1029,27 @@
             },
             {
               "internalType": "uint256",
-              "name": "roundLength_",
+              "name": "minCrowd_",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "maxCrowd_",
               "type": "uint256"
             }
           ],
           "stateMutability": "nonpayable",
           "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "name": "DayClosed",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "DayNotDrawn",
+          "type": "error"
         },
         {
           "inputs": [],
@@ -1079,12 +1094,12 @@
             },
             {
               "indexed": false,
-              "internalType": "uint256",
-              "name": "endsAt",
-              "type": "uint256"
+              "internalType": "uint256[6]",
+              "name": "crowd",
+              "type": "uint256[6]"
             }
           ],
-          "name": "RoundOpened",
+          "name": "DayOpened",
           "type": "event"
         },
         {
@@ -1104,6 +1119,12 @@
             },
             {
               "indexed": false,
+              "internalType": "bool",
+              "name": "forced",
+              "type": "bool"
+            },
+            {
+              "indexed": false,
               "internalType": "uint256",
               "name": "yieldPool",
               "type": "uint256"
@@ -1119,15 +1140,9 @@
               "internalType": "uint256",
               "name": "fee",
               "type": "uint256"
-            },
-            {
-              "indexed": false,
-              "internalType": "uint256",
-              "name": "winners",
-              "type": "uint256"
             }
           ],
-          "name": "Settled",
+          "name": "Drawn",
           "type": "event"
         },
         {
@@ -1247,6 +1262,19 @@
         {
           "inputs": [
             {
+              "internalType": "bool",
+              "name": "forceMyHex",
+              "type": "bool"
+            }
+          ],
+          "name": "draw",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
               "internalType": "uint256",
               "name": "roundId",
               "type": "uint256"
@@ -1254,6 +1282,11 @@
           ],
           "name": "getRound",
           "outputs": [
+            {
+              "internalType": "uint256[6]",
+              "name": "crowd",
+              "type": "uint256[6]"
+            },
             {
               "internalType": "uint256[6]",
               "name": "totals",
@@ -1265,16 +1298,6 @@
               "type": "uint256"
             },
             {
-              "internalType": "uint64",
-              "name": "openedAt",
-              "type": "uint64"
-            },
-            {
-              "internalType": "uint64",
-              "name": "endsAt",
-              "type": "uint64"
-            },
-            {
               "internalType": "uint8",
               "name": "winningHex",
               "type": "uint8"
@@ -1282,6 +1305,11 @@
             {
               "internalType": "bool",
               "name": "settled",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "forced",
               "type": "bool"
             },
             {
@@ -1300,12 +1328,12 @@
         },
         {
           "inputs": [],
-          "name": "hasPending",
+          "name": "lastSettledRound",
           "outputs": [
             {
-              "internalType": "bool",
+              "internalType": "uint256",
               "name": "",
-              "type": "bool"
+              "type": "uint256"
             }
           ],
           "stateMutability": "view",
@@ -1313,7 +1341,7 @@
         },
         {
           "inputs": [],
-          "name": "lastSettledRound",
+          "name": "maxCrowd",
           "outputs": [
             {
               "internalType": "uint256",
@@ -1339,6 +1367,19 @@
         },
         {
           "inputs": [],
+          "name": "minCrowd",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "minYieldPool",
           "outputs": [
             {
@@ -1352,6 +1393,13 @@
         },
         {
           "inputs": [],
+          "name": "nextDay",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "prizeReserve",
           "outputs": [
             {
@@ -1361,26 +1409,6 @@
             }
           ],
           "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "roundLength",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "name": "settlePending",
-          "outputs": [],
-          "stateMutability": "nonpayable",
           "type": "function"
         },
         {

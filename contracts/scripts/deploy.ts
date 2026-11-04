@@ -19,8 +19,9 @@ const DAY_LENGTH_SECONDS = BigInt(process.env.DAY_LENGTH_SECONDS ?? "10");
 // The simulated yield pool for each round, in USDC.
 const MIN_YIELD_POOL = parseUnits(process.env.MIN_YIELD_POOL ?? "1", 6);
 const MAX_YIELD_POOL = parseUnits(process.env.MAX_YIELD_POOL ?? "10", 6);
-// How long a game round lasts after its first stake.
-const ROUND_LENGTH_SECONDS = BigInt(process.env.ROUND_LENGTH_SECONDS ?? "30");
+// Simulated Tickets from other players on each hex, per day.
+const MIN_CROWD = BigInt(process.env.MIN_CROWD ?? "5");
+const MAX_CROWD = BigInt(process.env.MAX_CROWD ?? "120");
 // USDC that the deployer sends to HexGame to pay the simulated yield pools.
 const PRIZE_RESERVE = parseUnits(process.env.PRIZE_RESERVE ?? "5000", 6);
 
@@ -73,7 +74,8 @@ const gameArgs = [
   deployer.account.address,
   MIN_YIELD_POOL,
   MAX_YIELD_POOL,
-  ROUND_LENGTH_SECONDS,
+  MIN_CROWD,
+  MAX_CROWD,
 ] as const;
 const game = await viem.deployContract("HexGame", [...gameArgs]);
 console.log(`HexGame:   ${game.address}`);
@@ -113,7 +115,6 @@ const deployment = {
   startBlock: startBlock.toString(),
   deployer: deployer.account.address,
   dayLengthSeconds: Number(dayLength),
-  roundLengthSeconds: Number(ROUND_LENGTH_SECONDS),
   constructorArgs: {
     SmemVault: stringify(vaultArgs),
     HexGame: stringify(gameArgs),

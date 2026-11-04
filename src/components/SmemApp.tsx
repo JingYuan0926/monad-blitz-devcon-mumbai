@@ -16,7 +16,6 @@ import {
 
 import {
   DAY_LENGTH,
-  FIRST_DAY,
   hexGame,
   LEGACY_VAULTS,
   legacyVaultAbi,
@@ -28,7 +27,7 @@ import {
 } from "@/lib/contracts";
 import { addressUrl, chain, txUrl } from "@/lib/wagmi";
 
-type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "stake" | "switch" | "migrate";
+type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "stake" | "draw" | "nextDay" | "switch" | "migrate";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const fmt = (n: number, digits = 2) =>
@@ -68,7 +67,8 @@ export function SmemApp() {
   const [lastTx, setLastTx] = useState<{ label: string; hash: Hash } | null>(null);
   const [amount, setAmount] = useState("100");
   const [tile, setTile] = useState<number>(1);
-  const [stake, setStake] = useState("1");
+  const [stake, setStake] = useState("10");
+  const [forceWin, setForceWin] = useState(false);
 
   // A browser clock that ticks every 100 ms. It stays 0 during the server prerender.
   const [now, setNow] = useState(0);
@@ -79,7 +79,6 @@ export function SmemApp() {
   // The vault splits time into days of DAY_LENGTH seconds. Tickets arrive when a day ends.
   const nowSeconds = Math.floor(now / 1000);
   const dayIndex = Math.floor(nowSeconds / DAY_LENGTH);
-  const dayNumber = dayIndex - FIRST_DAY + 1;
   const secondsLeft = DAY_LENGTH - (nowSeconds % DAY_LENGTH);
   const dayProgress = 1 - secondsLeft / DAY_LENGTH;
   const user = address ?? "0x0000000000000000000000000000000000000000";
@@ -142,24 +141,11 @@ export function SmemApp() {
     ],
     query: { enabled: ready && now > 0, refetchInterval: 2000, placeholderData: keepPreviousData },
   });
-  const last = lastRound > 0n ? (lastReads.data?.[0]?.result as RoundData | undefined) : undefined;
-  const myLastStakes = (lastReads.data?.[1]?.result as readonly bigint[] | undefined) ?? ZERO_STAKES;
   const myLastWin = (lastReads.data?.[2]?.result as bigint | undefined) ?? 0n;
   const current = currentId > 0n ? (lastReads.data?.[3]?.result as RoundData | undefined) : undefined;
 
-  // Round phases. A round opens with the first stake, runs for a fixed time, then the game waits for the next stake.
-  const nowExact = now / 1000;
-  const openedAt = Number(current?.[2] ?? 0n);
-  const endsAt = Number(current?.[3] ?? 0n);
-  const phase: "none" | "open" | "drawing" | "waiting" = !current
-    ? "none"
-    : current[5]
-      ? "waiting"
-      : nowExact < endsAt
-        ? "open"
-        : "drawing";
-  const roundSecondsLeft = Math.max(0, Math.ceil(endsAt - nowExact));
-  const roundProgress = endsAt > openedAt ? Math.min(1, Math.max(0, (nowExact - openedAt) / (endsAt - openedAt))) : 0;
+  // The demo day stays open until someone draws, then stays on the result until "Next day".
+  const settled = !!current?.[4];
 
   // Deposits left in older vaults from earlier deploys.
   const legacyReads = useReadContracts({
@@ -278,25 +264,25 @@ export function SmemApp() {
     const staked = BigInt(Math.max(0, Math.floor(Number(stake) || 0)));
     if (staked === 0n) return setError("Stake at least 1 Ticket.");
     if (Number(staked) > wholeTickets) return setError("You do not have enough Tickets for this stake.");
-    await run("stake", async () => {
-      // A stake can also draw the last round and pay its winners, so the gas can grow between the estimate and
-      // the block. Double the estimate and add room for a draw.
-      const estimate = await publicClient!.estimateContractGas({
-        ...hexGame,
-        functionName: "stake",
-        args: [tile, staked],
-        account: address!,
-      });
-      return write.mutateAsync({ ...hexGame, functionName: "stake", args: [tile, staked], gas: estimate * 2n + 400_000n });
-    });
+    await run("stake", () => write.mutateAsync({ ...hexGame, functionName: "stake", args: [tile, staked], gas: 400_000n }));
   }
 
+  const onDraw = () =>
+    run("draw", () => write.mutateAsync({ ...hexGame, functionName: "draw", args: [forceWin], gas: 1_500_000n }));
+
+  const onNextDay = () =>
+    run("nextDay", () => write.mutateAsync({ ...hexGame, functionName: "nextDay", gas: 800_000n }));
+
   const usdcText = (v: bigint) => fmt(Number(formatUnits(v, USDC_DECIMALS)));
-  const roundTotals = current?.[0] ?? ZERO_STAKES;
+  const roundTotals = current?.[1] ?? ZERO_STAKES;
   const roundTickets = roundTotals.reduce((a, b) => a + b, 0n);
-  const roundPool = current?.[1] ?? 0n;
-  // The yield pool builds up over the round. The draw pays the full amount.
-  const poolSoFar = Number(formatUnits(roundPool, USDC_DECIMALS)) * (phase === "open" ? roundProgress : 1);
+  const roundPool = current?.[2] ?? 0n;
+  const winningHex = settled ? current?.[3] : undefined;
+  const myTotal = myStakes.reduce((a, b) => a + b, 0n);
+  const myOnWinner = winningHex ? myStakes[winningHex - 1] : 0n;
+  const winnerTotal = winningHex ? roundTotals[winningHex - 1] : 0n;
+  const myShare = winnerTotal > 0n ? Number((myOnWinner * 10_000n) / winnerTotal) / 100 : 0;
+  const myWinNow = currentId > 0n && lastRound === currentId ? myLastWin : 0n;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
@@ -379,41 +365,6 @@ export function SmemApp() {
         />
       </section>
 
-      {/* Day clock */}
-      {mounted && now > 0 && (
-        <section className="mt-3 rounded-2xl border border-border bg-surface p-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-            <span>
-              <span className="font-semibold">Day {dayNumber.toLocaleString()}</span>
-              <span className="text-muted"> ends in </span>
-              <span className="font-mono tabular-nums">{secondsLeft}s</span>
-            </span>
-            <span className="text-muted">
-              {ready ? (
-                ticketsAtDayEnd > 0n ? (
-                  <>
-                    You get <span className="text-accent-strong">+{fmt(toTickets(ticketsAtDayEnd))} Tickets</span> in{" "}
-                    <span className="font-mono tabular-nums">{secondsLeft}s</span>, when this day ends
-                  </>
-                ) : principal > 0n ? (
-                  <>
-                    Your deposit counts from the next full day. First Tickets in{" "}
-                    <span className="font-mono tabular-nums text-accent-strong">{secondsLeft + DAY_LENGTH}s</span>
-                  </>
-                ) : (
-                  "Deposit USDC to earn Tickets every day"
-                )
-              ) : (
-                `Demo: 1 day = ${DAY_LENGTH} seconds`
-              )}
-            </span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-accent transition-[width] duration-100 ease-linear" style={{ width: `${dayProgress * 100}%` }} />
-          </div>
-        </section>
-      )}
-
       {!ready && mounted && (
         <div className="mt-6 rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted">
           {wrongChain ? "Switch MetaMask to Monad Testnet to continue." : "Connect MetaMask to start saving and playing."}
@@ -476,34 +427,25 @@ export function SmemApp() {
         <div className="card">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Hex Yield Draw</h3>
-            <span className="text-xs text-muted">
-              {phase === "open"
-                ? `Round ${currentId} · draw in ${roundSecondsLeft}s`
-                : phase === "drawing"
-                  ? `Round ${currentId} · drawing…`
-                  : "Waiting for the first stake"}
+            <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
+              Day {currentId.toString()} · {settled ? "drawn" : "open"}
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            The first stake starts a round. When the round ends, one hex wins its yield pool. Players on that hex
-            split 95% of it by their share of the hex. Morney keeps 5%. Then the board waits for the next stake.
+            Stake Tickets on a hex, then draw. One hex wins today&apos;s yield. Everyone on it splits 95% by their share
+            of the hex. Morney keeps 5%.
           </p>
 
           <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 rounded-xl bg-surface-2 px-4 py-3">
-            <span className="text-sm text-muted">
-              {phase === "open" ? "Yield pool so far" : phase === "drawing" ? "Yield pool" : "Next yield pool"}
-            </span>
-            <span className="font-mono text-lg tabular-nums">
-              {phase === "open" || phase === "drawing"
-                ? `${poolSoFar.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 })} USDC`
-                : "Starts with the first stake"}
-            </span>
+            <span className="text-sm text-muted">Today&apos;s total yield (estimate)</span>
+            <span className="font-mono text-lg tabular-nums text-accent-strong">{usdcText(roundPool)} USDC</span>
           </div>
 
           <div className="mt-4 grid grid-cols-3 justify-items-center gap-x-2 gap-y-3">
             {TILES.map((t) => {
               const picked = t === tile;
-              const lastWinner = phase === "waiting" && current?.[4] === t;
+              const won = winningHex === t;
+              const lost = settled && !won;
               const onHex = roundTotals[t - 1];
               const mine = myStakes[t - 1];
               return (
@@ -514,12 +456,18 @@ export function SmemApp() {
                   aria-label={`Hex ${t}`}
                   className={[
                     "hex grid aspect-[1.15] w-full max-w-28 place-items-center font-semibold transition",
-                    lastWinner ? "bg-win text-background" : picked ? "bg-accent text-foreground" : "bg-surface-2 text-muted hover:bg-border",
+                    won
+                      ? "bg-win text-background"
+                      : picked && !settled
+                        ? "bg-accent text-foreground"
+                        : lost
+                          ? "bg-surface-2 text-muted opacity-50"
+                          : "bg-surface-2 text-muted hover:bg-border",
                   ].join(" ")}
                 >
                   <span className="flex flex-col items-center leading-tight">
                     <span className="text-2xl">{t}</span>
-                    <span className="font-mono text-[11px] font-normal opacity-80">{onHex.toLocaleString()} 🎟</span>
+                    <span className="font-mono text-[11px] font-normal opacity-90">{onHex.toLocaleString()} Tickets</span>
                     {mine > 0n && <span className="font-mono text-[10px] font-normal">you {mine.toLocaleString()}</span>}
                   </span>
                 </button>
@@ -527,68 +475,73 @@ export function SmemApp() {
             })}
           </div>
           <p className="mt-2 text-center text-xs text-muted">
-            {phase === "open"
-              ? `${roundTickets.toLocaleString()} Tickets staked · draw in ${roundSecondsLeft}s`
-              : phase === "drawing"
-                ? "Drawing the winning hex on chain…"
-                : phase === "waiting"
-                  ? `Round ${currentId} ended. Hex ${current?.[4]} won. Stake to start round ${currentId + 1n}.`
-                  : "Stake Tickets to start the first round."}
+            {roundTickets.toLocaleString()} Tickets on the board today · you staked {myTotal.toLocaleString()}
           </p>
 
-          <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
-            Stake (Tickets) · you have {ready ? wholeTickets.toLocaleString() : "—"}
-          </label>
-          <div className="mt-2 flex gap-2">
-            <input
-              id="stake"
-              inputMode="numeric"
-              className="input"
-              value={stake}
-              onChange={(e) => setStake(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-            {[1, 5, 10].map((n) => (
-              <button
-                key={n}
-                className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground"
-                onClick={() => setStake(String(n))}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
-          <button className="btn-primary mt-3 w-full" onClick={onStake} disabled={!ready || !!busy}>
-            {busy === "stake"
-              ? "Staking…"
-              : phase === "open"
-                ? `Stake ${stake || 0} Ticket${stake === "1" ? "" : "s"} on hex ${tile}`
-                : `Start a round: stake ${stake || 0} on hex ${tile}`}
-          </button>
-
-          <div aria-live="polite" className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
-            {last?.[5] ? (
-              <>
-                <div>
-                  <span className="text-muted">Last draw · Round {lastRound.toString()}: </span>
-                  hex <span className="font-semibold">{last[4]}</span> won{" "}
-                  {last[6] > 0n ? (
-                    <>
-                      <span className="font-mono">{usdcText(last[6])} USDC</span> for its players
-                    </>
-                  ) : (
-                    <>nothing. Nobody was on it, so the pool stays in the reserve.</>
-                  )}
+          {!settled ? (
+            <>
+              <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
+                Stake (Tickets) · you have {ready ? wholeTickets.toLocaleString() : "—"}
+              </label>
+              <div className="mt-2 flex gap-2">
+                <input
+                  id="stake"
+                  inputMode="numeric"
+                  className="input"
+                  value={stake}
+                  onChange={(e) => setStake(e.target.value.replace(/[^0-9]/g, ""))}
+                />
+                {[10, 50, 100].map((n) => (
+                  <button
+                    key={n}
+                    className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground"
+                    onClick={() => setStake(String(n))}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <button className="btn-secondary" onClick={onStake} disabled={!ready || !!busy}>
+                  {busy === "stake" ? "Staking…" : `Stake ${stake || 0} on hex ${tile}`}
+                </button>
+                <button className="btn-primary" onClick={onDraw} disabled={!ready || !!busy}>
+                  {busy === "draw" ? "Drawing on chain…" : "Draw the winner"}
+                </button>
+              </div>
+              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-muted">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--accent)]"
+                  checked={forceWin}
+                  onChange={(e) => setForceWin(e.target.checked)}
+                />
+                Demo: make my hex win
+              </label>
+            </>
+          ) : (
+            <div aria-live="polite" className="mt-4 rounded-xl border border-border px-4 py-3 text-sm">
+              <div>
+                Hex <span className="font-semibold">{winningHex}</span> won today&apos;s{" "}
+                <span className="font-mono">{usdcText(roundPool)} USDC</span>
+                {current?.[5] ? " (demo: forced)" : ""}.
+              </div>
+              {myOnWinner > 0n ? (
+                <div className="mt-1 text-win">
+                  You had {myOnWinner.toLocaleString()} of {winnerTotal.toLocaleString()} Tickets on hex {winningHex} ({myShare}
+                  %). You won <span className="font-mono font-semibold">{usdcText(myWinNow)} USDC</span>. It is in your
+                  wallet now.
                 </div>
-                {myLastWin > 0n ? (
-                  <div className="mt-1 text-win">You won {usdcText(myLastWin)} USDC. It is in your wallet now.</div>
-                ) : myLastStakes.some((x) => x > 0n) ? (
-                  <div className="mt-1 text-lose">You were not on hex {last[4]}. Your staked Tickets are spent.</div>
-                ) : null}
-              </>
-            ) : (
-              <span className="text-muted">No draws yet. Stake Tickets to open the first round.</span>
-            )}
-          </div>
+              ) : myTotal > 0n ? (
+                <div className="mt-1 text-lose">You were not on hex {winningHex}. Your staked Tickets are spent.</div>
+              ) : (
+                <div className="mt-1 text-muted">You did not stake today.</div>
+              )}
+              <button className="btn-primary mt-3 w-full" onClick={onNextDay} disabled={!ready || !!busy}>
+                {busy === "nextDay" ? "Opening the next day…" : "Next day"}
+              </button>
+            </div>
+          )}
 
           <dl className="mt-4 space-y-2 text-sm">
             <Row label="Prize reserve (simulated yield)" value={`${usdcText(prizeReserve)} USDC`} />
@@ -622,8 +575,8 @@ export function SmemApp() {
   );
 }
 
-// getRound: totals, yieldPool, openedAt, endsAt, winningHex, settled, paidToWinners, fee
-type RoundData = readonly [readonly bigint[], bigint, bigint, bigint, number, boolean, bigint, bigint];
+// getRound: crowd, totals, yieldPool, winningHex, settled, forced, paidToWinners, fee
+type RoundData = readonly [readonly bigint[], readonly bigint[], bigint, number, boolean, boolean, bigint, bigint];
 const ZERO_STAKES: readonly bigint[] = [0n, 0n, 0n, 0n, 0n, 0n];
 
 function safeParse(value: string, decimals: number) {

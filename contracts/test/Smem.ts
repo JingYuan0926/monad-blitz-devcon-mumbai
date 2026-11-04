@@ -30,7 +30,8 @@ describe("Smem", async function () {
       owner.account.address,
       USDC("1"),
       USDC("10"),
-      ROUND,
+      5n,
+      60n,
     ]);
     await vault.write.setGame([game.address, true]);
     // Fund the prize reserve with 1,000 USDC.
@@ -99,112 +100,69 @@ describe("Smem", async function () {
     assert.equal(await vault.read.ticketsOf([alice.account.address]), 150n * TICKET);
   });
 
-  it("burns staked Tickets and records them on the hex", async function () {
-    const { vault, game } = await setup();
-    await depositAndEarnOneDay(vault, "100");
-    await game.write.stake([2, 4n], { account: alice.account });
-
-    const round = await game.read.currentRoundId();
-    assert.equal(round, 1n);
-    const [totals, yieldPool, , , winningHex, settled] = await game.read.getRound([round]);
-    assert.equal(totals[1], 4n);
+  it("opens day 1 with a random yield pool and a random crowd on every hex", async function () {
+    const { game } = await setup();
+    assert.equal(await game.read.currentRoundId(), 1n);
+    const [crowd, totals, yieldPool, winningHex, settled] = await game.read.getRound([1n]);
     assert.ok(yieldPool >= USDC("1") && yieldPool <= USDC("10"));
+    for (let h = 0; h < 6; h++) {
+      assert.ok(crowd[h] >= 5n && crowd[h] <= 60n);
+      assert.equal(totals[h], crowd[h]);
+    }
     assert.equal(winningHex, 0);
     assert.equal(settled, false);
-    assert.equal((await game.read.stakesOf([round, alice.account.address]))[1], 4n);
-    // The test vault gives 1 Ticket per USDC per day: 100 earned, 4 staked.
-    assert.equal(await vault.read.ticketsOf([alice.account.address]), 96n * TICKET);
-    assert.equal(await vault.read.principalOf([alice.account.address]), USDC("100"));
   });
 
-  it("splits 95% of the yield pool by share on the winning hex and sends 5% to the treasury", async function () {
+  it("burns staked Tickets, and a forced draw pays the pool share of the winning hex", async function () {
     const { usdc, vault, game } = await setup();
-    // Bob saves too.
-    await usdc.write.faucet({ account: bob.account });
-    await usdc.write.approve([vault.address, USDC("1000")], { account: bob.account });
-    await toNextDay();
-    await vault.write.deposit([USDC("100")], { account: alice.account });
-    await vault.write.deposit([USDC("100")], { account: bob.account });
-    await toNextDay();
-    await toNextDay();
+    await depositAndEarnOneDay(vault, "100");
+    const me = alice.account.address;
 
-    // Both players cover every hex, so the winning hex always has Alice 1 : Bob 3.
-    // Mine all 12 stakes in one block, so they land in the same 10-second round.
-    const publicClient = await viem.getPublicClient();
-    const testClient = await viem.getTestClient();
-    await testClient.setAutomine(false);
-    const hashes = [];
-    for (let h = 1; h <= 6; h++) {
-      hashes.push(await game.write.stake([h, 1n], { account: alice.account, gas: 500_000n }));
-      hashes.push(await game.write.stake([h, 3n], { account: bob.account, gas: 500_000n }));
-    }
-    await networkHelpers.mine();
-    await testClient.setAutomine(true);
-    for (const hash of hashes) {
-      assert.equal((await publicClient.waitForTransactionReceipt({ hash })).status, "success");
-    }
-    const round = await game.read.currentRoundId();
-    const [, yieldPool] = await game.read.getRound([round]);
+    await game.write.stake([3, 10n], { account: alice.account });
+    assert.equal(await vault.read.ticketsOf([me]), 90n * TICKET);
+    const [crowd, totals, yieldPool] = await game.read.getRound([1n]);
+    assert.equal(totals[2], crowd[2] + 10n);
 
-    const aliceBefore = await usdc.read.balanceOf([alice.account.address]);
-    const bobBefore = await usdc.read.balanceOf([bob.account.address]);
+    const before = await usdc.read.balanceOf([me]);
     const treasuryBefore = await usdc.read.balanceOf([owner.account.address]);
+    await game.write.draw([true], { account: alice.account });
 
-    // Nothing settles before the round ends.
-    await game.write.settlePending();
-    assert.equal((await game.read.getRound([round]))[5], false);
-
-    await networkHelpers.time.increase(ROUND);
-    assert.equal(await game.read.hasPending(), true);
-    await game.write.settlePending();
-
-    const [, , , , winningHex, settled, paidToWinners, fee] = await game.read.getRound([round]);
+    const [, , , winningHex, settled, forced, paid, fee] = await game.read.getRound([1n]);
+    assert.equal(winningHex, 3);
     assert.equal(settled, true);
-    assert.ok(winningHex >= 1 && winningHex <= 6);
+    assert.equal(forced, true);
     assert.equal(fee, (yieldPool * 500n) / 10_000n);
-    const forWinners = yieldPool - fee;
-    const aliceWon = forWinners / 4n;
-    const bobWon = (forWinners * 3n) / 4n;
-    assert.equal(paidToWinners, aliceWon + bobWon);
-    assert.equal(await usdc.read.balanceOf([alice.account.address]), aliceBefore + aliceWon);
-    assert.equal(await usdc.read.balanceOf([bob.account.address]), bobBefore + bobWon);
+    const expected = ((yieldPool - fee) * 10n) / totals[2];
+    assert.equal(paid, expected);
+    assert.equal(await usdc.read.balanceOf([me]), before + expected);
     assert.equal(await usdc.read.balanceOf([owner.account.address]), treasuryBefore + fee);
-    assert.equal(await game.read.usdcWonOf([alice.account.address]), aliceWon);
-    assert.equal(await game.read.lastSettledRound(), round);
-    // Savings never move.
-    assert.equal(await vault.read.principalOf([alice.account.address]), USDC("100"));
+    assert.equal(await game.read.wonInRound([1n, me]), expected);
+    assert.equal(await vault.read.principalOf([me]), USDC("100"));
   });
 
-  it("waits after a draw, and the next stake opens a new round", async function () {
+  it("stays on the result until nextDay, which opens a new random day", async function () {
     const { vault, game } = await setup();
-    await depositAndEarnOneDay(vault, "1000");
+    await depositAndEarnOneDay(vault, "100");
 
-    // Stake only on hex 1 for several rounds. Each new stake draws the round before it.
-    const played: bigint[] = [];
-    for (let i = 0; i < 8; i++) {
-      await game.write.stake([1, 1n], { account: alice.account });
-      played.push(await game.read.currentRoundId());
-      await networkHelpers.time.increase(ROUND);
-    }
-    await game.write.settlePending();
-    assert.deepEqual(played, [1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n]);
+    await viem.assertions.revertWithCustomError(game.write.nextDay(), game, "DayNotDrawn");
+    await game.write.stake([1, 1n], { account: alice.account });
+    await game.write.draw([false], { account: alice.account });
 
-    let losses = 0;
-    for (const round of played) {
-      const [, , , , winningHex, settled, paidToWinners, fee] = await game.read.getRound([round]);
-      assert.equal(settled, true);
-      if (winningHex !== 1) {
-        losses++;
-        assert.equal(paidToWinners, 0n);
-        assert.equal(fee, 0n);
-      }
-    }
-    assert.ok(losses > 0, "expected at least one round where hex 1 lost");
+    // The day is closed. No more stakes or draws until nextDay.
+    await viem.assertions.revertWithCustomError(
+      game.write.stake([1, 1n], { account: alice.account }),
+      game,
+      "DayClosed",
+    );
+    await viem.assertions.revertWithCustomError(game.write.draw([false]), game, "DayClosed");
+    await networkHelpers.time.increase(1000);
+    assert.equal(await game.read.currentRoundId(), 1n);
 
-    // After the last draw, no new round opens by itself.
-    await networkHelpers.time.increase(ROUND * 3n);
-    assert.equal(await game.read.hasPending(), false);
-    assert.equal(await game.read.currentRoundId(), 8n);
+    await game.write.nextDay();
+    assert.equal(await game.read.currentRoundId(), 2n);
+    const [, , , winningHex, settled] = await game.read.getRound([2n]);
+    assert.equal(winningHex, 0);
+    assert.equal(settled, false);
   });
 
   it("rejects a stake larger than the Ticket balance", async function () {

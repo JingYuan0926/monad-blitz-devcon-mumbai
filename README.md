@@ -16,7 +16,7 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | Contract | Address | Source |
 | --- | --- | --- |
 | SmemVault | [`0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914`](https://testnet.monadexplorer.com/address/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) |
-| HexGame | [`0x6a27d7ecd48da8f4d5c358732c522385e2947b30`](https://testnet.monadexplorer.com/address/0x6a27d7ecd48da8f4d5c358732c522385e2947b30) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x6a27d7ecd48da8f4d5c358732c522385e2947b30) |
+| HexGame | [`0x096311607135e063ec669bf7d4abf77e634d6225`](https://testnet.monadexplorer.com/address/0x096311607135e063ec669bf7d4abf77e634d6225) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x096311607135e063ec669bf7d4abf77e634d6225) |
 | MockUSDC (USDC) | [`0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907`](https://testnet.monadexplorer.com/address/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) |
 
 ### What works today
@@ -25,15 +25,17 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 2. Click **Get 1,000 USDC** to mint test USDC. This USDC is a test token with no value.
 3. Deposit USDC into the vault. You can withdraw your full deposit at any time.
 4. Wait for the day to end. Tickets arrive only at the end of each day.
-5. Play the **Hex Yield Draw**. Pick a hex from 1 to 6 and stake Tickets. The game spends the staked Tickets.
-6. The first stake starts a 30-second round with a yield pool in USDC. The pool builds up while the round runs. When the round ends, one hex wins at random.
-7. Morney keeps 5% of the pool. Players on the winning hex split the other 95% by their share of that hex. The USDC goes straight to their wallets.
-8. If nobody is on the winning hex, the pool stays in the reserve.
-9. After the draw, the board stops on the result. The next stake starts the next round.
+5. Play the **Hex Yield Draw**. Each day shows today's total yield (an estimate) and the Tickets that other players put on each of the 6 hexes.
+6. Pick a hex and stake Tickets. The game spends the staked Tickets.
+7. Press **Draw the winner**. One hex wins at random.
+8. Morney keeps 5% of the yield. Everyone on the winning hex splits the other 95% by their share of that hex. Your USDC goes straight to your wallet.
+9. The board stays on the result. Press **Next day** to get a new random yield and new Tickets on every hex.
+
+**Demo switch:** Tick **Demo: make my hex win** before you draw. Then the hex where you staked the most wins. This exists only for live demos.
 
 **How Tickets work:** 10 USDC held for a full day earns 1 Ticket when the day ends. For example, 100 USDC earns 10 Tickets per day. Each day pays the lowest balance you held during that day. A deposit starts to earn on the next full day. In this demo, **1 day = 10 seconds**. The page shows your Tickets per day and a countdown to the end of the day.
 
-**Hex Yield Draw example:** The round's yield pool is 8.00 USDC. You stake 5 Tickets on hex 3, and another player stakes 15 Tickets on hex 3. Hex 3 wins. Morney keeps 0.40 USDC (5%). Hex 3 shares 7.60 USDC: you get 7.60 × 5 ÷ 20 = 1.90 USDC, and the other player gets 5.70 USDC.
+**Hex Yield Draw example:** Today's yield is 8.00 USDC. Other players have 15 Tickets on hex 3, and you stake 5. Hex 3 wins. Morney keeps 0.40 USDC (5%). Hex 3 shares 7.60 USDC: you get 7.60 × 5 ÷ 20 = 1.90 USDC.
 
 The game can spend Tickets and pay out the yield pool. It cannot touch anyone's savings. Only the depositor can withdraw their deposit. Only the depositor can withdraw their deposit.
 
@@ -43,7 +45,7 @@ Your savings earn Tickets. Use your Tickets to play games, including casino game
 
 | Game | Type | Status |
 | --- | --- | --- |
-| Hex Yield Draw | Casino: stake Tickets on 1 of 6 hexes. The winning hex of each round splits the yield pool by share. | Live on testnet |
+| Hex Yield Draw | Casino: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
 | More casino games, such as dice, roulette and slots | Casino | Planned |
 | Daily prediction challenges | Prediction | Planned |
 
@@ -51,7 +53,7 @@ Every game uses the same Tickets. A loss costs only Tickets, never your savings.
 
 The vault contract is named `SmemVault` because we deployed it before the project rename. The contract name does not change how it works.
 
-**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each round's yield pool is a simulated random amount from 1 to 10 USDC, paid from a prize reserve. In production, the pool is the real yield that the vault earns on Aave.
+**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each day's yield is a simulated random amount from 1 to 10 USDC, paid from a prize reserve. The other players' Tickets on each hex are simulated too (5 to 120 per hex). In production, the pool is the real yield that the vault earns on Aave.
 
 ## Run it yourself
 
@@ -74,7 +76,6 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 5. Deploy: `npm run deploy`. This writes the new addresses to `src/contracts/deployment.json`.
 6. Verify the source: `npm run verify`
 7. Run the full flow on chain: `npm run smoke`
-8. Draw each round as soon as it ends: `npm run keeper`. Without the keeper, the next stake settles the old rounds.
 
 ## Project layout
 
