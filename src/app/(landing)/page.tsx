@@ -3,49 +3,49 @@ import { LogoMark, Wordmark } from "@/components/Logo";
 import { ArrowUpRight, Navbar } from "@/components/Navbar";
 
 const HERO_STATS = [
-  { label: "Prize pool", value: "95% of yield" },
-  { label: "Platform fee", value: "5% of yield" },
-  { label: "Total yield (demo)", value: "$318,640" },
+  { label: "Draw", value: "Every day" },
+  { label: "Odds", value: "By Tickets" },
+  { label: "Total yield", value: "$318,640" },
 ];
 
 const STEPS = [
   {
     title: "Deposit",
-    body: "Deposit USDC into the Morney vault. The planned integration supplies it to Aave on Monad, where borrower interest generates variable yield.",
+    body: "Deposit USDC into the Morney vault and withdraw it any time. The vault is built to supply USDC to Aave on Monad, where borrower interest generates yield.",
   },
   {
     title: "Get Tickets",
-    body: "Receive a daily Ticket allowance based on your eligible balance and time deposited. Tickets are play credits, not a claim on USDC.",
+    body: "At the end of each day, the vault gives you Tickets for the USDC you held all day. 100 USDC earns 1 Ticket. Tickets are play credits, not a claim on USDC.",
   },
   {
     title: "Play",
-    body: "Choose how to play. Experiences may include arcade games, casino-style games, and daily prediction challenges. The initial lineup is still being selected.",
+    body: "Stake Tickets on one or more of 6 hexes in the Hex Yield Draw. You can also try to multiply them in Roulette and Blackjack.",
   },
   {
-    title: "Earn Points",
-    body: "Eligible results award Prize Points under published scoring rules, on per-game and shared daily leaderboards.",
+    title: "The draw",
+    body: "One hex wins the day's prize pool. The draw is weighted by Tickets: a hex with more Tickets has better odds.",
   },
   {
     title: "Get Paid",
-    body: "Morney takes 5% of the day's yield. The other 95% is split by each player's share of eligible Prize Points.",
+    body: "Everyone on the winning hex splits the prize pool by their share of the Tickets on that hex. The USDC goes straight to their wallets.",
   },
 ];
 
 const DIFFERENTIATORS = [
   {
     kicker: "Shared vault",
-    title: "Flexible play",
-    body: "A shared savings vault with a flexible gaming experience. Choose how you participate while competing for the same daily reward pool.",
+    title: "One shared prize",
+    body: "Many small savers pool their yield into one daily prize that is worth playing for.",
   },
   {
     kicker: "Aligned revenue",
-    title: "5% of yield",
-    body: "Platform revenue is a 5% share of generated yield, aligned with the vault's earning activity.",
+    title: "Fee on yield only",
+    body: "Morney earns a small share of the yield the vault generates. It never takes a share of your deposit.",
   },
   {
     kicker: "No wagering",
     title: "No Ticket purchases",
-    body: "The core model doesn't require you to buy Tickets or wager your deposits.",
+    body: "Your savings earn your Tickets. You never buy Tickets, and you never wager your deposit.",
   },
 ];
 
@@ -65,8 +65,9 @@ const RISKS = [
 const HACKATHON_SCOPE = [
   "Savings vault",
   "Daily Tickets",
-  "One game",
-  "Daily reward distribution",
+  "Hex Yield Draw",
+  "Roulette and Blackjack",
+  "Live on Monad Mainnet",
 ];
 
 const TRADE_EXAMPLE = [
@@ -114,9 +115,9 @@ export default function Home() {
               </h1>
 
               <p className="rise mt-8 max-w-xl text-lg leading-relaxed text-muted [animation-delay:380ms]">
-                Morney turns the yield from your savings into daily gaming
-                rewards. Deposit USDC, receive Tickets, and play to earn Prize
-                Points. Losing a game never deducts your savings principal.
+                Morney turns the yield from your savings into a daily prize.
+                Deposit USDC, earn Tickets every day, and stake them on the Hex
+                Yield Draw. Losing a game never touches your savings.
               </p>
 
               <div className="rise mt-10 flex flex-wrap gap-3 [animation-delay:480ms]">
@@ -189,24 +190,23 @@ export default function Home() {
           <div className="mt-6 grid gap-16 lg:grid-cols-2">
             <div>
               <h2 className="font-display text-[clamp(2rem,4.4vw,3.75rem)] font-medium uppercase leading-[1.02] tracking-[-0.03em]">
-                No jackpot draw.
-                <span className="slice-text block italic">Just points.</span>
+                One draw a day.
+                <span className="slice-text block italic">Shared by Tickets.</span>
               </h2>
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
-                Morney takes a 5% platform fee from the day&apos;s generated
-                yield. The remaining 95% forms the daily prize pool, shared in
-                proportion to eligible Prize Points — rewards come from points,
-                not a separate random jackpot draw.
+                A small platform fee comes out of the day&apos;s yield. The rest
+                is the prize pool. One hex wins, weighted by Tickets, and
+                everyone on it splits the pool by their share of that hex.
               </p>
               <pre className="mt-10 overflow-x-auto border border-line bg-surface/80 p-5 font-mono text-sm leading-relaxed text-foreground/85 backdrop-blur">
                 <span className="text-muted">{"// player reward\n"}</span>
-                reward = dailyPrizePool × <span className="text-primary">yourEligiblePoints</span>
+                reward = prizePool × <span className="text-primary">yourTicketsOnWinningHex</span>
                 {"\n"}
-                {"         ÷ totalEligiblePoints"}
+                {"         ÷ allTicketsOnWinningHex"}
               </pre>
               <p className="mt-4 max-w-lg font-mono text-xs uppercase leading-relaxed tracking-[0.08em] text-muted">
-                Payouts depend on actual available yield and settled results.
-                Unresolved predictions count toward a later payout cycle.
+                If nobody is on the winning hex, the pool stays for later days.
+                Payouts depend on the yield the vault actually earns.
               </p>
             </div>
 
@@ -216,40 +216,40 @@ export default function Home() {
                 Example day
               </p>
               <p className="mt-3 font-display text-5xl font-medium tabular-nums tracking-tight sm:text-6xl">
-                $100.00
+                $1,000.00
               </p>
-              <p className="mt-1 text-muted">yield generated by the vault</p>
+              <p className="mt-1 text-muted">prize pool for the day · hex 4 wins</p>
 
               <div className="mt-10 flex h-3 w-full gap-0.5 overflow-hidden">
-                <div className="h-full w-[95%] bg-gradient-to-r from-primary to-[#a594ff]" />
-                <div className="h-full w-[5%] bg-foreground" />
+                <div className="h-full w-[25%] bg-gradient-to-r from-primary to-[#a594ff]" />
+                <div className="h-full w-[75%] bg-foreground/15" />
               </div>
               <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="flex items-center gap-2 text-muted">
-                    <span className="size-2 bg-primary" /> Prize pool
+                    <span className="size-2 bg-primary" /> Your Tickets on hex 4
                   </p>
                   <p className="mt-1 font-display text-xl font-medium tabular-nums">
-                    $95.00
+                    5
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="flex items-center justify-end gap-2 text-muted">
-                    <span className="size-2 bg-foreground" /> Platform fee
+                    <span className="size-2 bg-foreground/15" /> All Tickets on hex 4
                   </p>
                   <p className="mt-1 font-display text-xl font-medium tabular-nums">
-                    $5.00
+                    20
                   </p>
                 </div>
               </div>
 
               <div className="mt-10 flex items-end justify-between border-t border-line pt-6">
                 <div>
-                  <p className="text-muted">You hold 10% of today&apos;s eligible Prize Points</p>
-                  <p className="mt-1 font-mono text-sm text-muted">$95.00 × 10%</p>
+                  <p className="text-muted">You hold 25% of the winning hex</p>
+                  <p className="mt-1 font-mono text-sm text-muted">$1,000.00 × 5 ÷ 20</p>
                 </div>
                 <p className="font-display text-4xl font-medium tabular-nums text-primary">
-                  $9.50
+                  $250.00
                 </p>
               </div>
             </div>

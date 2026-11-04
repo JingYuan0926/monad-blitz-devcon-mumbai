@@ -1,6 +1,6 @@
 import { parseAbi, type Abi, type Address } from "viem";
 
-import deployment from "@/contracts/deployment.json";
+import { deployment } from "@/lib/network";
 
 // npm run contracts:deploy writes deployment.json with the live addresses and ABIs.
 export const usdc = {

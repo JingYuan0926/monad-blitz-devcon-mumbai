@@ -1,16 +1,21 @@
-import { createPublicClient, createWalletClient, http, type Hex } from "viem";
+import { createPublicClient, createWalletClient, http, type Abi, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { monad } from "viem/chains";
-
-import { hexGame } from "@/lib/contracts";
+import { chainFor, deployments, rpcFor, type NetworkName } from "@/lib/network";
 
 // Opens the next demo day for the player, so the player does not sign a transaction.
 // nextDay() is open to anyone, so this relayer key only pays gas. It cannot move any funds.
-export async function POST() {
+export async function POST(request: Request) {
+  const body = (await request.json().catch(() => ({}))) as { network?: NetworkName };
+  const network: NetworkName = body.network === "testnet" ? "testnet" : "mainnet";
+  const hexGame = {
+    address: deployments[network].contracts.HexGame.address as `0x${string}`,
+    abi: deployments[network].contracts.HexGame.abi as Abi,
+  };
+  const monad = chainFor(network);
   const key = process.env.RELAYER_PRIVATE_KEY as Hex | undefined;
   if (!key) return Response.json({ error: "The relayer is not set up." }, { status: 500 });
 
-  const transport = http(process.env.NEXT_PUBLIC_MONAD_RPC_URL ?? "https://rpc.monad.xyz");
+  const transport = http(rpcFor(network));
   const publicClient = createPublicClient({ chain: monad, transport });
   const wallet = createWalletClient({ account: privateKeyToAccount(key), chain: monad, transport });
 

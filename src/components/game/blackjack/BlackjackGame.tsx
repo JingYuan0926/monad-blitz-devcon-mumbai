@@ -162,7 +162,7 @@ export function BlackjackGame() {
               Blackjack pays 3 to 2
             </p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.22em] text-white/50 sm:text-xs">
-              Dealer stands on all 17s · 6 decks · Winnings paid as Prize Points
+              Dealer stands on 17 · Winnings paid in Tickets
             </p>
           </div>
 
@@ -347,7 +347,7 @@ function RoundSummary({ game, pointsWon, delay }: { game: PublicBlackjackState; 
     <div className="pop border border-primary/30 bg-primary-soft/40 p-5" style={{ animationDelay: `${delay}ms` }} aria-live="polite">
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">Round result</p>
       <p className="mt-1 font-display text-2xl font-semibold">
-        {pointsWon > 0 ? `+${pointsWon} Prize Points` : returned ? "Tickets returned" : "No win this hand"}
+        {pointsWon > 0 ? `+${pointsWon} Tickets won` : returned ? "Tickets returned" : "No win this hand"}
       </p>
       <p className="mt-1 text-sm text-muted">
         {staked} Tickets played · {returned} returned

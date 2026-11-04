@@ -67,7 +67,7 @@ export function GameShell({ player, displayTickets, children }: GameShellProps) 
 
           <div className="flex items-center gap-2 sm:gap-3">
             <Balance label="Tickets" value={tickets} accent />
-            <Balance label="Prize Points" value={player?.prizePoints} />
+            <Balance label="Tickets / day" value={player?.dailyAllowance} />
           </div>
         </div>
         <nav className="flex border-t border-line font-mono text-xs uppercase tracking-[0.08em] sm:hidden">
@@ -92,12 +92,11 @@ export function GameShell({ player, displayTickets, children }: GameShellProps) 
       <footer className="border-t border-line bg-background">
         <div className="mx-auto flex max-w-[1400px] flex-col gap-1 px-4 py-4 font-mono text-[11px] uppercase tracking-[0.08em] text-muted sm:flex-row sm:justify-between sm:px-6">
           <span>
-            Scoring: winning bets return your Tickets + earn{" "}
-            {player?.rules.pointsPerTicketWon ?? "…"} Prize Point per Ticket won
+            Winning bets pay Tickets. Every bet is a transaction on Monad.
           </span>
           <span>
-            Daily allowance {player?.dailyAllowance ?? "…"} Tickets
-            {resetsIn ? ` · resets in ${resetsIn}` : ""}
+            Your savings earn {player?.dailyAllowance ?? "…"} Tickets per day
+            {resetsIn ? ` · next Tickets in ${resetsIn}` : ""}
           </span>
         </div>
       </footer>

@@ -274,7 +274,7 @@ function ResultPanel({ outcome }: { outcome: SpinResponse }) {
         {won ? (
           <>
             <p className="font-display text-2xl font-semibold text-[#85E6FF]">
-              +{outcome.pointsWon.toLocaleString()} Prize Points
+              +{outcome.pointsWon.toLocaleString()} Tickets won
             </p>
             <p className="text-sm text-white/60">{outcome.ticketsReturned} Tickets returned</p>
           </>
@@ -310,7 +310,7 @@ function Payouts() {
   return (
     <details className="group border border-line bg-background">
       <summary className="flex cursor-pointer items-center justify-between px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-muted">
-        Payout table · paid in Prize Points
+        Payout table · paid in Tickets
         <span className="transition-transform group-open:rotate-45">+</span>
       </summary>
       <div className="grid grid-cols-2 gap-px border-t border-line bg-line sm:grid-cols-4">

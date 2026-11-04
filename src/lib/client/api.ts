@@ -11,9 +11,8 @@ import {
   type Address,
   type EIP1193Provider,
 } from "viem";
-import { monad } from "viem/chains";
 
-import deployment from "@/contracts/deployment.json";
+import { activeChain as monad, deployment } from "@/lib/network";
 import type { Action, Card, HandResult, PublicBlackjackState, Rank, Suit } from "@/lib/game/blackjack";
 import { colorOf, PAYOUTS, type PocketColor, type RouletteBet, type SettledBet } from "@/lib/game/roulette";
 

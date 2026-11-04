@@ -3,7 +3,7 @@ import { BlackjackGame } from "@/components/game/blackjack/BlackjackGame";
 
 export const metadata: Metadata = {
   title: "Blackjack — Morney",
-  description: "Classic 6-deck blackjack played with Tickets. Wins earn Prize Points.",
+  description: "Blackjack played with Tickets on Monad. Wins pay more Tickets.",
 };
 
 export default function BlackjackPage() {

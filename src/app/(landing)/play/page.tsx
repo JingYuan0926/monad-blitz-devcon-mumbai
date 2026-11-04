@@ -6,7 +6,7 @@ import { TicketChip } from "@/components/game/TicketChip";
 
 export const metadata: Metadata = {
   title: "Play — Morney",
-  description: "Use your daily Tickets on casino games and earn Prize Points.",
+  description: "Use your Tickets in Roulette and Blackjack to win more Tickets.",
 };
 
 const GAMES = [
@@ -41,12 +41,12 @@ export default function PlayPage() {
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Choose how to play</p>
         <h1 className="mt-4 max-w-3xl font-display text-[clamp(2.2rem,5vw,4rem)] font-medium uppercase leading-[1] tracking-[-0.03em]">
           Spend Tickets.
-          <span className="slice-text block italic">Earn Prize Points.</span>
+          <span className="slice-text block italic">Win more Tickets.</span>
         </h1>
         <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted">
-          Bets use your daily Tickets — never your savings. Winning bets return
-          your Tickets and turn the winnings into Prize Points for today&apos;s
-          prize pool.
+          Bets use your Tickets — never your savings. Winning bets pay you more
+          Tickets. Take them to the Hex Yield Draw for a bigger share of
+          today&apos;s prize pool.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-2">

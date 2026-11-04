@@ -4,6 +4,7 @@ import { keepPreviousData } from "@tanstack/react-query";
 import Link from "next/link";
 
 import { Wordmark } from "@/components/Logo";
+import { NETWORK, setNetwork, TOKEN_SYMBOL } from "@/lib/network";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatUnits, maxUint256, parseUnits, type Hash } from "viem";
 import {
@@ -227,7 +228,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   async function onDeposit() {
     const value = safeParse(amount, USDC_DECIMALS);
     if (!value) return setError("Enter an amount greater than 0.");
-    if (value > walletUsdc) return setError("Your wallet does not have that much USDC. Get some from the faucet.");
+    if (value > walletUsdc) return setError(`Your wallet does not have that much ${TOKEN_SYMBOL}. Get some from the faucet.`);
     await run("deposit", async () => {
       if (allowance < value) {
         // One approval lets every later deposit go through in a single transaction.
@@ -297,7 +298,11 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
     setBusy("nextDay");
     setError(null);
     try {
-      const res = await fetch("/api/next-day", { method: "POST" });
+      const res = await fetch("/api/next-day", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ network: NETWORK }),
+      });
       const body = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(body.error ?? "The next day did not open.");
       await Promise.all([reads.refetch(), lastReads.refetch()]);
@@ -325,6 +330,9 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   const myShare = winnerTotal > 0n ? Number((myOnWinner * 10_000n) / winnerTotal) / 100 : 0;
   const myWinNow = currentId > 0n && lastRound === currentId ? myLastWin : 0n;
 
+  // The network choice lives in the browser, so draw the app only after it loads there.
+  if (!mounted) return <div className="min-h-screen" />;
+
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:py-10">
       {/* Header: same bar as the landing page */}
@@ -350,6 +358,18 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               Ticket Boosters
             </Link>
           </div>
+          <div className="flex items-center gap-2">
+          {mounted && (
+            <button
+              className="flex items-center gap-1 border border-foreground/15 p-1 font-mono text-[11px] uppercase tracking-[0.08em]"
+              onClick={() => setNetwork(NETWORK === "mainnet" ? "testnet" : "mainnet")}
+              title="Switch between Monad Mainnet and Monad Testnet"
+              aria-label={`Network: ${NETWORK}. Press to switch.`}
+            >
+              <span className={`px-2 py-1 ${NETWORK === "mainnet" ? "bg-accent text-white" : "text-muted"}`}>Mainnet</span>
+              <span className={`px-2 py-1 ${NETWORK === "testnet" ? "bg-accent text-white" : "text-muted"}`}>Testnet</span>
+            </button>
+          )}
           {!mounted ? (
             <span className="w-36" />
           ) : !isConnected ? (
@@ -369,6 +389,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               {short(address!)}
             </button>
           )}
+          </div>
         </nav>
       </header>
       <div className="h-16" />
@@ -435,7 +456,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
 
       {!ready && mounted && (
         <div className="mt-6 border border-dashed border-border p-6 text-center text-sm text-muted">
-          {wrongChain ? "Switch MetaMask to Monad Mainnet to continue." : "Connect MetaMask to start saving and playing."}
+          {wrongChain ? `Switch MetaMask to ${chain.name} to continue.` : "Connect MetaMask to start saving and playing."}
         </div>
       )}
 
@@ -455,7 +476,7 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
               <h3 className="mt-3 font-display text-2xl font-medium uppercase tracking-tight">Savings</h3>
             </div>
             <button className="text-sm text-accent-strong hover:underline disabled:opacity-40" onClick={onFaucet} disabled={!ready || !!busy}>
-              {busy === "faucet" ? "Minting…" : "Get 1,000 mUSD"}
+              {busy === "faucet" ? "Minting…" : `Get 1,000 ${TOKEN_SYMBOL}`}
             </button>
           </div>
           <p className="mt-1 text-sm text-muted">
@@ -689,10 +710,10 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <ContractLink name="SmemVault" address={vault.address} />
           <ContractLink name="HexGame" address={hexGame.address} />
-          <ContractLink name="mUSD" address={usdc.address} />
+          <ContractLink name={TOKEN_SYMBOL} address={usdc.address} />
         </div>
         <p className="mt-3">
-          Demo on Monad Mainnet. mUSD (Morney Demo USD) is a demo token with no value. The hex draw uses block data and is not safe for real prizes.
+          Demo on {chain.name}. {TOKEN_SYMBOL} is a demo token with no value. The hex draw uses block data and is not safe for real prizes.
         </p>
       </footer>
     </div>
