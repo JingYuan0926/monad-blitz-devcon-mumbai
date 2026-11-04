@@ -16,14 +16,14 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | --- | --- |
 | Forked GitHub repo | <https://github.com/JingYuan0926/monad-blitz-devcon-mumbai> |
 | Live public page | <https://morney.fun> |
-| Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x5c27258f989bc1acb56153e44ee59518473a1b24` · USDC `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
+| Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x74737e73290b7daa1b4908c74693f5259d319ae3` · USDC `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
 | Deployment | Contracts on **Monad Testnet** (chain ID 10143). Web app on **Railway** at the custom domain `morney.fun`. |
 
 ### Project working
 
 | Item | Where |
 | --- | --- |
-| Announced functions | Deposit, withdraw, daily Tickets, Hex Yield Draw (stake & draw in one transaction), Next day, test USDC faucet. See [What works today](#what-works-today). |
+| Announced functions | Deposit, withdraw, daily Tickets, Hex Yield Draw (stake on several hexes and draw in one transaction), Next day, test USDC faucet. See [What works today](#what-works-today). |
 | Live transaction during the demo | Every deposit, stake & draw and faucet click is a Monad Testnet transaction. The page links each one to the explorer. |
 | Verified contracts | All 3 contracts are verified on Sourcify. See the links in the table below. |
 | Run it from this README | See [Run it yourself](#run-it-yourself). The app uses the deployed contracts, so `npm install` and `npm run dev` are enough to play. |
@@ -55,7 +55,7 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | Contract | Address | Source |
 | --- | --- | --- |
 | SmemVault | [`0x6b3067314c8f76efb6ac9da6ec263eb933f428df`](https://testnet.monadexplorer.com/address/0x6b3067314c8f76efb6ac9da6ec263eb933f428df) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x6b3067314c8f76efb6ac9da6ec263eb933f428df) |
-| HexGame | [`0x5c27258f989bc1acb56153e44ee59518473a1b24`](https://testnet.monadexplorer.com/address/0x5c27258f989bc1acb56153e44ee59518473a1b24) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x5c27258f989bc1acb56153e44ee59518473a1b24) |
+| HexGame | [`0x74737e73290b7daa1b4908c74693f5259d319ae3`](https://testnet.monadexplorer.com/address/0x74737e73290b7daa1b4908c74693f5259d319ae3) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x74737e73290b7daa1b4908c74693f5259d319ae3) |
 | MockUSDC (USDC) | [`0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92`](https://testnet.monadexplorer.com/address/0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92) |
 
 ### What works today
@@ -65,12 +65,12 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 3. Deposit USDC into the vault. You can withdraw your full deposit at any time.
 4. Wait for the day to end. Tickets arrive only at the end of each day.
 5. Play the **Hex Yield Draw**. Each day shows today's total yield (an estimate) and the Tickets that other players put on each of the 6 hexes.
-6. Pick a hex, enter your stake and press **Stake & draw**. The game spends the staked Tickets.
+6. Put Tickets on one or more hexes, for example 3 on hex 2 and 10 on hex 4. Press **Lock in & draw** and sign once. The game spends the staked Tickets.
 7. The board spins for 5 seconds. Then one hex wins at random.
 8. Morney keeps 5% of the yield. Everyone on the winning hex splits the other 95% by their share of that hex. Your USDC goes straight to your wallet.
 9. The board stays on the result. Press **Next day** to get a new random yield and new Tickets on every hex.
 
-**Demo switch:** Tick **Demo: make my hex win** before you draw. Then your hex wins. This exists only for live demos.
+**Demo switch:** Tick **Demo: make my hex win** before you draw. Then the hex where you put the most Tickets wins. This exists only for live demos.
 
 **How Tickets work:** 100 USDC held for a full day earns 1 Ticket when the day ends. For example, 250 USDC earns 2.5 Tickets per day. Each day pays the lowest balance you held during that day. A deposit starts to earn on the next full day. In this demo, **1 day = 10 seconds**. The page shows your Tickets per day and a countdown to the end of the day.
 

@@ -68,7 +68,13 @@ export function SmemApp() {
   const [lastTx, setLastTx] = useState<{ label: string; hash: Hash } | null>(null);
   const [amount, setAmount] = useState("100");
   const [tile, setTile] = useState<number>(1);
-  const [stake, setStake] = useState("1");
+  // Tickets the player plans to put on each hex before locking in.
+  const [plan, setPlan] = useState<string[]>(["", "", "", "", "", ""]);
+  const planTickets = plan.map((v) => BigInt(Math.max(0, Math.floor(Number(v) || 0))));
+  const planTotal = planTickets.reduce((a, b) => a + b, 0n);
+  const planHexes = planTickets.filter((v) => v > 0n).length;
+  const setPlanFor = (hexId: number, value: string) =>
+    setPlan((p) => p.map((v, i) => (i === hexId - 1 ? value.replace(/[^0-9]/g, "") : v)));
   // After a play, the board spins for 5 seconds before it shows the result.
   const [revealUntil, setRevealUntil] = useState(0);
   const [forceWin, setForceWin] = useState(false);
@@ -267,14 +273,19 @@ export function SmemApp() {
   }
 
   async function onPlay() {
-    const staked = BigInt(Math.max(0, Math.floor(Number(stake) || 0)));
-    if (staked === 0n) return setError("Stake at least 1 Ticket.");
-    if (Number(staked) > wholeTickets) return setError("You do not have enough Tickets for this stake.");
+    if (planTotal === 0n) return setError("Put Tickets on at least one hex.");
+    if (Number(planTotal) > wholeTickets) return setError("You do not have enough Tickets for this plan.");
     const receipt = await run("play", () =>
-      write.mutateAsync({ ...hexGame, functionName: "play", args: [tile, staked, forceWin], gas: 1_500_000n }),
+      write.mutateAsync({
+        ...hexGame,
+        functionName: "playMany",
+        args: [planTickets, forceWin],
+        gas: 2_000_000n,
+      }),
     );
     if (receipt) {
-      setRevealUntil(Date.now() + 5000);
+      setRevealUntil(now + 5000);
+      setPlan(["", "", "", "", "", ""]);
       await lastReads.refetch();
     }
   }
@@ -464,7 +475,7 @@ export function SmemApp() {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Pick a hex and stake Tickets. Five seconds later, one hex wins today&apos;s yield. Everyone on it splits 95% by their share
+            Put Tickets on one or more hexes, then lock in. Five seconds later, one hex wins today&apos;s yield. Everyone on it splits 95% by their share
             of the hex. Morney keeps 5%.
           </p>
 
@@ -481,6 +492,7 @@ export function SmemApp() {
               const rolling = rollingHex === t;
               const onHex = roundTotals[t - 1];
               const mine = myStakes[t - 1];
+              const planned = planTickets[t - 1];
               return (
                 <button
                   key={t}
@@ -504,6 +516,9 @@ export function SmemApp() {
                     <span className="text-2xl">{t}</span>
                     <span className="font-mono text-[11px] font-normal opacity-90">{onHex.toLocaleString()} Tickets</span>
                     {mine > 0n && <span className="font-mono text-[10px] font-normal">you {mine.toLocaleString()}</span>}
+                    {!settled && planned > 0n && (
+                      <span className="font-mono text-[10px] font-semibold">+{planned.toLocaleString()} yours</span>
+                    )}
                   </span>
                 </button>
               );
@@ -520,28 +535,47 @@ export function SmemApp() {
           ) : !settled ? (
             <>
               <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
-                Stake (Tickets) · you have {ready ? wholeTickets.toLocaleString() : "—"}
+                Tickets on hex {tile} · tap a hex to switch · you have {ready ? wholeTickets.toLocaleString() : "—"}
               </label>
               <div className="mt-2 flex gap-2">
                 <input
                   id="stake"
                   inputMode="numeric"
                   className="input"
-                  value={stake}
-                  onChange={(e) => setStake(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0"
+                  value={plan[tile - 1]}
+                  onChange={(e) => setPlanFor(tile, e.target.value)}
                 />
                 {[1, 5, 10].map((n) => (
                   <button
                     key={n}
                     className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground"
-                    onClick={() => setStake(String(n))}
+                    onClick={() => setPlanFor(tile, String(Number(plan[tile - 1] || 0) + n))}
                   >
-                    {n}
+                    +{n}
                   </button>
                 ))}
               </div>
-              <button className="btn-primary mt-3 w-full" onClick={onPlay} disabled={!ready || !!busy}>
-                Stake {stake || 0} Ticket{stake === "1" ? "" : "s"} on hex {tile} &amp; draw
+              <div className="mt-2 flex items-center justify-between text-xs text-muted">
+                <span>
+                  Your plan: {planTotal.toLocaleString()} Ticket{planTotal === 1n ? "" : "s"} on {planHexes} hex
+                  {planHexes === 1 ? "" : "es"}
+                  {planHexes > 0 &&
+                    ` (${planTickets
+                      .map((v, i) => (v > 0n ? `hex ${i + 1}: ${v}` : ""))
+                      .filter(Boolean)
+                      .join(", ")})`}
+                </span>
+                {planTotal > 0n && (
+                  <button className="underline hover:text-foreground" onClick={() => setPlan(["", "", "", "", "", ""])}>
+                    Clear
+                  </button>
+                )}
+              </div>
+              <button className="btn-primary mt-3 w-full" onClick={onPlay} disabled={!ready || !!busy || planTotal === 0n}>
+                {planTotal > 0n
+                  ? `Lock in ${planTotal.toLocaleString()} Ticket${planTotal === 1n ? "" : "s"} & draw`
+                  : "Put Tickets on a hex to lock in"}
               </button>
               <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-muted">
                 <input

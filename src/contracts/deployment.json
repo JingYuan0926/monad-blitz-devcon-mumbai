@@ -1,8 +1,8 @@
 {
   "chainId": 10143,
   "network": "monadTestnet",
-  "deployedAt": "2026-11-04T11:15:59.889Z",
-  "startBlock": "76901226",
+  "deployedAt": "2026-11-04T11:30:31.725Z",
+  "startBlock": "76904054",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
   "dayLengthSeconds": 10,
   "constructorArgs": {
@@ -14,8 +14,8 @@
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f"
     ],
     "HexGame": [
-      "0x6b3067314c8f76efb6ac9da6ec263eb933f428df",
-      "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
+      "0x6B3067314c8F76eFb6AC9da6EC263eb933F428df",
+      "0xe0599E3D4F799Dd051Ea9B9c2Db2d245b1796B92",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
       "1000000000",
       "5000000000",
@@ -25,7 +25,7 @@
   },
   "contracts": {
     "MockUSDC": {
-      "address": "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
+      "address": "0xe0599E3D4F799Dd051Ea9B9c2Db2d245b1796B92",
       "abi": [
         {
           "inputs": [],
@@ -399,7 +399,7 @@
       ]
     },
     "SmemVault": {
-      "address": "0x6b3067314c8f76efb6ac9da6ec263eb933f428df",
+      "address": "0x6B3067314c8F76eFb6AC9da6EC263eb933F428df",
       "abi": [
         {
           "inputs": [
@@ -1034,7 +1034,7 @@
       ]
     },
     "HexGame": {
-      "address": "0x5c27258f989bc1acb56153e44ee59518473a1b24",
+      "address": "0x74737e73290b7daa1b4908c74693f5259d319ae3",
       "abi": [
         {
           "inputs": [
@@ -1453,6 +1453,24 @@
             }
           ],
           "name": "play",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256[6]",
+              "name": "tickets",
+              "type": "uint256[6]"
+            },
+            {
+              "internalType": "bool",
+              "name": "forceMyHex",
+              "type": "bool"
+            }
+          ],
+          "name": "playMany",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"

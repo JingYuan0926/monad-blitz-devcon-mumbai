@@ -102,6 +102,21 @@ contract HexGame {
         _draw(forceMyHex);
     }
 
+    /// @notice Stakes on several hexes at once, then draws, in one transaction.
+    /// @param tickets Whole Tickets for hex 1 to hex 6. Use 0 to skip a hex.
+    /// @param forceMyHex Demo only. When true, the hex where the caller staked the most wins.
+    function playMany(uint256[6] calldata tickets, bool forceMyHex) external {
+        bool any;
+        for (uint256 i = 0; i < TILES; i++) {
+            if (tickets[i] > 0) {
+                _stake(uint8(i + 1), tickets[i]);
+                any = true;
+            }
+        }
+        if (!any) revert ZeroStake();
+        _draw(forceMyHex);
+    }
+
     function _stake(uint8 hexId, uint256 tickets) internal {
         if (hexId < 1 || hexId > TILES) revert InvalidTile();
         if (tickets == 0) revert ZeroStake();

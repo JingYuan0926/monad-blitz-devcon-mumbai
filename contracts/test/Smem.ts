@@ -152,6 +152,19 @@ describe("Smem", async function () {
     assert.equal(await vault.read.ticketsOf([alice.account.address]), 96n * TICKET);
   });
 
+  it("playMany stakes on several hexes in one transaction and pays the winning hex share", async function () {
+    const { vault, game } = await setup();
+    await depositAndEarnOneDay(vault, "100");
+    await game.write.playMany([[0n, 3n, 0n, 10n, 0n, 0n], true], { account: alice.account });
+    const [crowd, totals, yieldPool, winningHex, settled, , paid, fee] = await game.read.getRound([1n]);
+    assert.equal(settled, true);
+    assert.equal(winningHex, 4); // The forced hex is where Alice staked the most.
+    assert.equal(totals[1], crowd[1] + 3n);
+    assert.equal(totals[3], crowd[3] + 10n);
+    assert.equal(paid, ((yieldPool - fee) * 10n) / totals[3]);
+    assert.equal(await vault.read.ticketsOf([alice.account.address]), 87n * TICKET);
+  });
+
   it("stays on the result until nextDay, which opens a new random day", async function () {
     const { vault, game } = await setup();
     await depositAndEarnOneDay(vault, "100");
