@@ -42,6 +42,7 @@ function errorText(e: unknown) {
   const text = err.shortMessage ?? err.message ?? "Transaction failed.";
   if (/user rejected|denied/i.test(text)) return "You rejected the request in MetaMask.";
   if (/InsufficientTickets/.test(text)) return "You do not have enough Tickets for this stake.";
+  if (/DayClosed/.test(text)) return "Today was already drawn. A new day is open now, so please submit again.";
   if (/InsufficientPrincipal/.test(text)) return "You cannot withdraw more than you saved.";
   if (/provider not found|connector not found/i.test(text)) return "MetaMask is not installed in this browser.";
   return text.split("\n")[0].slice(0, 160);
@@ -291,6 +292,24 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   async function onPlay() {
     if (planTotal === 0n) return setError("Put Tickets on at least one hex.");
     if (Number(planTotal) > wholeTickets) return setError("You do not have enough Tickets for this plan.");
+    // If today was already drawn on chain (another tab or player), open the next day first.
+    const latestId = (await publicClient!.readContract({ ...hexGame, functionName: "currentRoundId" })) as bigint;
+    const latest = (await publicClient!.readContract({
+      ...hexGame,
+      functionName: "getRound",
+      args: [latestId],
+    })) as unknown as RoundData;
+    if (latest[4]) {
+      setBusy("nextDay");
+      const res = await fetch("/api/next-day", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ network: NETWORK }),
+      });
+      setBusy(null);
+      if (!res.ok) return setError("Today was already drawn, and the next day did not open. Press Next day.");
+      await Promise.all([reads.refetch(), lastReads.refetch()]);
+    }
     const receipt = await run("play", async () => {
       // Estimate the gas, then add a 50% margin. A fixed high limit makes MetaMask show a fee alert.
       const estimate = await publicClient!.estimateContractGas({
