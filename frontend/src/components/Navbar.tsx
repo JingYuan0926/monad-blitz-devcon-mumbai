@@ -8,6 +8,7 @@ import { Wordmark } from "./Logo";
 const NAV_LINKS = [
   { label: "How it works", href: "#how-it-works" },
   { label: "Payouts", href: "#payouts" },
+  { label: "Why Morney", href: "#why-morney" },
   { label: "Risk", href: "#risk" },
   { label: "Roadmap", href: "#roadmap" },
 ];

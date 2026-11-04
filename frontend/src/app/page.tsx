@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     title: "Play",
-    body: "Use Tickets on arcade games, casino-style games, or daily prediction challenges. The initial lineup is still being selected.",
+    body: "Choose how to play. Experiences may include arcade games, casino-style games, and daily prediction challenges. The initial lineup is still being selected.",
   },
   {
     title: "Earn Points",
@@ -28,6 +28,24 @@ const STEPS = [
   {
     title: "Get Paid",
     body: "Morney takes 5% of the day's yield. The other 95% is split by each player's share of eligible Prize Points.",
+  },
+];
+
+const DIFFERENTIATORS = [
+  {
+    kicker: "Shared vault",
+    title: "Flexible play",
+    body: "A shared savings vault with a flexible gaming experience. Choose how you participate while competing for the same daily reward pool.",
+  },
+  {
+    kicker: "Aligned revenue",
+    title: "5% of yield",
+    body: "Platform revenue is a 5% share of generated yield, aligned with the vault's earning activity.",
+  },
+  {
+    kicker: "No wagering",
+    title: "No Ticket purchases",
+    body: "The core model doesn't require you to buy Tickets or wager your deposits.",
   },
 ];
 
@@ -86,18 +104,19 @@ export default function Home() {
           <div className="flex flex-col gap-12 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="font-display text-[clamp(2.6rem,7.4vw,7rem)] font-medium uppercase leading-[0.98] tracking-[-0.03em]">
-                <span className="rise block">Keep your savings.</span>
+                <span className="rise block">Save more.</span>
                 <span className="rise block [animation-delay:120ms]">
-                  Play with the yield.
+                  Play more.
                 </span>
                 <span className="rise slice-text block pr-[0.1em] italic [animation-delay:240ms]">
-                  More &amp; more money
+                  Compete for daily rewards
                 </span>
               </h1>
 
               <p className="rise mt-8 max-w-xl text-lg leading-relaxed text-muted [animation-delay:380ms]">
-                Deposit USDC on Monad, earn daily Tickets, and compete for a
-                share of the vault&apos;s yield. Your principal never plays.
+                Morney turns the yield from your savings into daily gaming
+                rewards. Deposit USDC, receive Tickets, and play to earn Prize
+                Points. Losing a game never deducts your savings principal.
               </p>
 
               <div className="rise mt-10 flex flex-wrap gap-3 [animation-delay:480ms]">
@@ -114,13 +133,13 @@ export default function Home() {
               </div>
             </div>
 
-            <dl className="rise grid grid-cols-3 gap-6 border-t border-line pt-6 [animation-delay:600ms] lg:flex lg:flex-col lg:gap-10 lg:border-t-0 lg:pt-0 lg:text-right">
+            <dl className="rise grid shrink-0 grid-cols-3 gap-6 border-t border-line pt-6 [animation-delay:600ms] lg:flex lg:flex-col lg:gap-10 lg:border-t-0 lg:pt-0 lg:text-right">
               {HERO_STATS.map((s) => (
                 <div key={s.label}>
                   <dt className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
                     {s.label}
                   </dt>
-                  <dd className="mt-1.5 font-display text-lg font-medium tabular-nums sm:text-2xl">
+                  <dd className="mt-1.5 whitespace-nowrap font-display text-lg font-medium tabular-nums sm:text-2xl">
                     {s.value}
                   </dd>
                 </div>
@@ -136,8 +155,8 @@ export default function Home() {
         >
           <SectionLabel index="01" label="How it works" />
           <h2 className="mt-6 max-w-3xl font-display text-[clamp(2rem,4.4vw,3.75rem)] font-medium uppercase leading-[1.02] tracking-[-0.03em]">
-            Your savings earn the access.
-            <span className="text-muted/70"> Your skill earns the reward.</span>
+            Savings determine access.
+            <span className="text-muted/70"> Results determine rewards.</span>
           </h2>
 
           <ol className="mt-16 grid border-l border-t border-line sm:grid-cols-2 lg:grid-cols-5">
@@ -174,14 +193,16 @@ export default function Home() {
                 <span className="slice-text block italic">Just points.</span>
               </h2>
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted">
-                Every day the vault&apos;s yield becomes the prize pool. Your
-                share is your share of the day&apos;s Prize Points — nothing
-                more, nothing random.
+                Morney takes a 5% platform fee from the day&apos;s generated
+                yield. The remaining 95% forms the daily prize pool, shared in
+                proportion to eligible Prize Points — rewards come from points,
+                not a separate random jackpot draw.
               </p>
               <pre className="mt-10 overflow-x-auto border border-line bg-surface/80 p-5 font-mono text-sm leading-relaxed text-foreground/85 backdrop-blur">
-                <span className="text-muted">{"// payout per player\n"}</span>
-                reward = pool × <span className="text-primary">yourPoints</span>{" "}
-                ÷ totalPoints
+                <span className="text-muted">{"// player reward\n"}</span>
+                reward = dailyPrizePool × <span className="text-primary">yourEligiblePoints</span>
+                {"\n"}
+                {"         ÷ totalEligiblePoints"}
               </pre>
               <p className="mt-4 max-w-lg font-mono text-xs uppercase leading-relaxed tracking-[0.08em] text-muted">
                 Payouts depend on actual available yield and settled results.
@@ -224,7 +245,7 @@ export default function Home() {
 
               <div className="mt-10 flex items-end justify-between border-t border-line pt-6">
                 <div>
-                  <p className="text-muted">You hold 10% of today&apos;s points</p>
+                  <p className="text-muted">You hold 10% of today&apos;s eligible Prize Points</p>
                   <p className="mt-1 font-mono text-sm text-muted">$95.00 × 10%</p>
                 </div>
                 <p className="font-display text-4xl font-medium tabular-nums text-primary">
@@ -235,12 +256,41 @@ export default function Home() {
           </div>
         </section>
 
+        {/* What makes Morney different */}
+        <section
+          id="why-morney"
+          className="mx-auto max-w-[1400px] scroll-mt-20 px-4 py-24 sm:px-6"
+        >
+          <SectionLabel index="03" label="What makes Morney different" />
+          <h2 className="mt-6 max-w-3xl font-display text-[clamp(2rem,4.4vw,3.75rem)] font-medium uppercase leading-[1.02] tracking-[-0.03em]">
+            One shared vault.
+            <span className="slice-text block italic">Your way to play.</span>
+          </h2>
+
+          <div className="mt-16 grid border-l border-t border-line md:grid-cols-3">
+            {DIFFERENTIATORS.map((d) => (
+              <div
+                key={d.title}
+                className="border-b border-r border-line bg-background/70 p-6 backdrop-blur-sm sm:p-8"
+              >
+                <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-primary">
+                  {d.kicker}
+                </p>
+                <h3 className="mt-6 font-display text-2xl font-medium uppercase tracking-tight">
+                  {d.title}
+                </h3>
+                <p className="mt-3 leading-relaxed text-muted">{d.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* Principal & risk */}
         <section
           id="risk"
           className="mx-auto max-w-[1400px] scroll-mt-20 px-4 py-24 sm:px-6"
         >
-          <SectionLabel index="03" label="Principal & risk" />
+          <SectionLabel index="04" label="Principal & risk" />
           <h2 className="mt-6 max-w-3xl font-display text-[clamp(2rem,4.4vw,3.75rem)] font-medium uppercase leading-[1.02] tracking-[-0.03em]">
             Your savings stay out of the game.
             <span className="text-muted/70"> Not out of the market.</span>
@@ -261,7 +311,7 @@ export default function Home() {
           id="roadmap"
           className="mx-auto max-w-[1400px] scroll-mt-20 px-4 py-24 sm:px-6"
         >
-          <SectionLabel index="04" label="Roadmap" />
+          <SectionLabel index="05" label="Roadmap" />
           <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
             <div className="relative border border-line bg-background/80 p-6 backdrop-blur-sm sm:p-8">
               <Corners />
@@ -315,7 +365,13 @@ export default function Home() {
               <p className="mt-6 border-l-2 border-primary pl-4 text-sm leading-relaxed text-foreground/80">
                 Tickets are an additional reward — not protection against
                 trading losses. Margin stays exposed to fees, funding, and
-                liquidation, and the same funds count only once.
+                liquidation. The same funds count only once — moving savings
+                into margin doesn&apos;t earn duplicate allocations.
+              </p>
+              <p className="mt-4 font-mono text-xs uppercase leading-relaxed tracking-[0.08em] text-muted">
+                Margin doesn&apos;t automatically earn lending yield. Morney
+                Trade needs an exchange integration that supports yield-bearing
+                collateral, or a separate budget to fund trading rewards.
               </p>
             </div>
           </div>
@@ -330,10 +386,16 @@ export default function Home() {
             />
             <LogoMark className="pointer-events-none absolute -bottom-10 -right-6 h-64 w-auto opacity-30 sm:h-80" />
             <h2 className="relative font-display text-[clamp(2rem,5vw,4.5rem)] font-medium uppercase leading-[1] tracking-[-0.03em]">
-              <span className="block">Save more.</span>
-              <span className="block">Play more.</span>
-              <span className="block italic text-primary-soft">Morney.</span>
+              <span className="block">Keep savings productive.</span>
+              <span className="block">Use Tickets to play.</span>
+              <span className="block italic text-primary-soft">
+                Compete for daily yield.
+              </span>
             </h2>
+            <p className="relative mt-6 max-w-xl text-lg leading-relaxed text-white/70">
+              Morney&apos;s vision is to make saving more engaging — more and
+              more money for our users.
+            </p>
             <a
               href="#"
               className="relative mt-10 inline-flex items-center gap-2 bg-primary px-6 py-3.5 font-mono text-sm uppercase tracking-[0.08em] text-white transition-[background-color,color,transform] hover:bg-white hover:text-foreground active:scale-[0.97]"
