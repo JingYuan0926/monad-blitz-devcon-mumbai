@@ -377,6 +377,13 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
             <Link href="/play" className="text-foreground/70 transition-colors hover:text-accent">
               Ticket Boosters
             </Link>
+            <a
+              href={NETWORK === "mainnet" ? "https://testnet.morney.fun" : "https://morney.fun"}
+              className="border border-accent/50 px-2 py-1 text-accent transition-colors hover:bg-accent/10"
+              title={NETWORK === "mainnet" ? "Try Morney on Monad Testnet with free tokens" : "Go to Morney on Monad Mainnet"}
+            >
+              {NETWORK === "mainnet" ? "Testnet ↗" : "Mainnet ↗"}
+            </a>
           </div>
           <div className="flex items-center gap-2">
           {!mounted ? (

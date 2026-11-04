@@ -99,6 +99,13 @@ export function SiteHeader() {
             {n.label}
           </Link>
         ))}
+        <a
+          href={NETWORK === "mainnet" ? "https://testnet.morney.fun" : "https://morney.fun"}
+          className="border border-primary/50 px-2 py-1 text-primary transition-colors hover:bg-primary/10"
+          title={NETWORK === "mainnet" ? "Try Morney on Monad Testnet with free tokens" : "Go to Morney on Monad Mainnet"}
+        >
+          {NETWORK === "mainnet" ? "Testnet ↗" : "Mainnet ↗"}
+        </a>
       </nav>
       <div className="flex items-center gap-2">
         {!mounted ? (
