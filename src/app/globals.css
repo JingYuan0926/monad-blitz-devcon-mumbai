@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0b0a12;
+  --surface: #15131f;
+  --surface-2: #1d1a2b;
+  --border: #2a2640;
+  --foreground: #f1effa;
+  --muted: #9a94b8;
+  --accent: #836ef9;
+  --accent-strong: #a08fff;
+  --win: #3ddc97;
+  --lose: #ff6b8a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-win: var(--win);
+  --color-lose: var(--lose);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgb(131 110 249 / 0.18), transparent 70%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-border bg-surface p-5;
+  }
+  .input {
+    @apply w-full min-w-0 rounded-xl border border-border bg-background px-3 py-2.5 font-mono text-base outline-none focus:border-accent;
+  }
+  .btn-primary {
+    @apply rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-strong disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-secondary {
+    @apply rounded-xl border border-border px-4 py-2.5 text-sm font-semibold transition hover:border-accent disabled:cursor-not-allowed disabled:opacity-40;
+  }
+}
+
+.hex {
+  clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0% 50%);
+}
+
+@keyframes spin-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.6);
+  }
+}
+
+.hex-rolling {
+  animation: spin-glow 0.5s ease-in-out infinite;
+}
