@@ -4,9 +4,9 @@
 
 **Save more. Play more. Compete for daily rewards.**
 
-Morney is a gamified savings platform designed for Monad that lets users turn the yield from their savings into daily gaming rewards. Users deposit USDC, receive Tickets based on their eligible savings balance, and use those Tickets to participate in games and prediction challenges. Their results earn Prize Points, which determine their share of a daily yield-funded prize pool.
+Morney is a gamified savings app on Monad. You deposit USDC, and your savings earn **Tickets** every day. You stake Tickets on the **Hex Yield Draw**: one of 6 hexes wins the day's yield, and everyone on that hex splits 95% of it by their share of the hex. You can also try to multiply your Tickets in two **Ticket Boosters**, Roulette and Blackjack.
 
-The deposited savings remain separate from gameplay. Players compete using Tickets, so losing a game does not deduct their savings principal.
+Your savings never play. Games spend and pay only Tickets, so a loss costs Tickets, never your deposit.
 
 ## Judging checklist (Monad Blitz Mumbai — Devcon Edition)
 
@@ -15,17 +15,17 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | Item | Where |
 | --- | --- |
 | Forked GitHub repo | <https://github.com/JingYuan0926/monad-blitz-devcon-mumbai> |
-| Live public page | <https://morney.fun> (landing) and <https://morney.fun/savings> and <https://morney.fun/draw> |
-| Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x1237eb3b8c735de71370dadc56e7325da5cc3260` · USDC `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
+| Live public page | <https://morney.fun> (landing) · <https://morney.fun/savings> · <https://morney.fun/draw> · <https://morney.fun/play> |
+| Contract addresses | SmemVault `0x6b3067314c8f76efb6ac9da6ec263eb933f428df` · HexGame `0x1237eb3b8c735de71370dadc56e7325da5cc3260` · TicketRoulette `0x3101889fbcbe4cbad9c32a1af04d0bde950a10e3` · TicketBlackjack `0xf458e77ec371126cb9a5f5eba70bed5b8b9ab74c` · USDC (test) `0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92` |
 | Deployment | Contracts on **Monad Testnet** (chain ID 10143). Web app on **Railway** at the custom domain `morney.fun`. |
 
 ### Project working
 
 | Item | Where |
 | --- | --- |
-| Announced functions | Deposit, withdraw, daily Tickets, Hex Yield Draw (stake on several hexes and draw in one transaction), Next day, test USDC faucet. See [What works today](#what-works-today). |
-| Live transaction during the demo | Every deposit, stake & draw and faucet click is a Monad Testnet transaction. The page links each one to the explorer. |
-| Verified contracts | All 3 contracts are verified on Sourcify. See the links in the table below. |
+| Announced functions | Deposit, withdraw, daily Tickets, Hex Yield Draw (stake on several hexes and draw in one transaction), gasless Next day, Roulette, Blackjack, test USDC faucet. See [What works today](#what-works-today). |
+| Live transaction during the demo | Every deposit, withdraw, lock-in, spin, deal, hit and stand is a Monad Testnet transaction. The pages link each one to the explorer. |
+| Verified contracts | All 5 contracts are verified on Sourcify. See the links in the tables below. |
 | Run it from this README | See [Run it yourself](#run-it-yourself). The app uses the deployed contracts, so `npm install` and `npm run dev` are enough to play. |
 
 ### Build in public
@@ -45,11 +45,11 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 | Custom domain | Yes: <https://morney.fun> |
 | Pre-market fit | Prize-linked savings already work in traditional finance. Morney adds games and daily draws, so a small saver can win a share of the yield that the whole pool earns. Savings are never staked in the games. |
 | Revenue | Morney keeps **5% of the yield**. At about 4.2% APY on Aave USDC, a $1,000,000 pool earns about $42,000 a year, so Morney earns about $2,100 a year. Revenue grows with total deposits. |
-| Innovation | Tickets turn idle yield into play credits. One shared yield pool is split by Tickets on the winning hex, on a fast chain where each draw settles in about one second. |
+| Innovation | Tickets turn savings into play credits, so nobody risks their deposit. One shared yield pool is drawn by Tickets (more Tickets, better odds) and split by share on the winning hex. Each draw settles on Monad in about a second. |
 
 ## Live on Monad Testnet
 
-- **Live app:** <https://morney.fun> (landing page) → <https://morney.fun/savings> (savings) and <https://morney.fun/draw> (Hex Yield Draw) · backup URL: <https://web-production-aabfb.up.railway.app>
+- **Live app:** <https://morney.fun> (landing page) → <https://morney.fun/savings> (savings), <https://morney.fun/draw> (Hex Yield Draw) and <https://morney.fun/play> (Ticket Boosters) · backup URL: <https://web-production-aabfb.up.railway.app>
 - **Network:** Monad Testnet (chain ID 10143)
 
 | Contract | Address | Source |
@@ -76,15 +76,15 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 
 **Hex Yield Draw example:** Today's yield is 2,000 USDC. Other players have 3 Tickets on hex 3, and you stake 1. Hex 3 wins. Morney keeps 100 USDC (5%). Hex 3 shares 1,900 USDC: you get 1,900 × 1 ÷ 4 = 475 USDC.
 
-The game can spend Tickets and pay out the yield pool. It cannot touch anyone's savings. Only the depositor can withdraw their deposit. Only the depositor can withdraw their deposit.
+The game can spend Tickets and pay out the yield pool. It cannot touch anyone's savings. Only the depositor can withdraw their deposit.
 
 ### Play games with your Tickets
 
-Your savings earn Tickets. Use your Tickets in games and boosters. Winners share the yield that everyone's savings earn.
+Your savings earn Tickets. Use your Tickets in the Hex Yield Draw to win USDC yield, or in the Ticket Boosters to win more Tickets.
 
 | Game | Type | Status |
 | --- | --- | --- |
-| Hex Yield Draw | Draw: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
+| Hex Yield Draw | Stake Tickets on any of 6 hexes. The draw is weighted by Tickets. The winning hex splits the day's yield by share. | Live on testnet: <https://morney.fun/draw> |
 | Ticket Boosters: Roulette and Blackjack | Earn more Tickets | Live on testnet: <https://morney.fun/play> |
 | Daily prediction challenges | Prediction | Planned |
 
@@ -135,38 +135,37 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 
 | Path | What it holds |
 | --- | --- |
-| `src/app/(landing)/` | Landing page at `/` |
-| `src/app/(app)/` | Savings at `/savings`, Hex Yield Draw at `/draw` and Ticket Boosters at `/play` (wagmi + viem + MetaMask) |
+| `src/app/(landing)/` | Landing page at `/` and the Ticket Booster screens at `/play`, `/play/roulette` and `/play/blackjack` |
+| `src/app/(app)/` | Savings at `/savings` and Hex Yield Draw at `/draw` (wagmi + viem + MetaMask) |
+| `src/lib/client/api.ts` | Sends Roulette and Blackjack actions to the contracts through MetaMask |
 | `src/app/api/next-day/` | Server route that opens the next day for the player |
 | `contracts/contracts/` | Solidity contracts |
 | `contracts/test/` | Contract tests |
-| `contracts/scripts/` | Deploy, verify and smoke-test scripts |
+| `contracts/scripts/` | Deploy, verify, smoke-test, booster deploy and mainnet scripts |
 
 ## How Morney works
 
-1. **Deposit and generate yield.** Users deposit USDC into Morney’s vault. The planned integration supplies those funds to Aave on Monad, where borrower interest generates variable yield.
-
-2. **Receive daily Tickets.** Users receive a daily Ticket allowance based on their eligible deposited balance and time deposited. Tickets serve as play credits rather than a fixed claim on USDC.
-
-3. **Choose how to play.** Morney is designed to support multiple experiences, potentially including arcade games, casino-style games, and daily prediction challenges. The initial game lineup is still being selected.
-
-4. **Earn Prize Points.** Eligible game results award Prize Points under published scoring rules. Each game can have its own leaderboard, while a shared daily leaderboard combines results using a defined scoring system.
-
-5. **Share the daily rewards.** Morney takes a **5% platform fee from the day’s generated yield**. The remaining **95% forms the daily prize pool**, distributed proportionally according to eligible Prize Points.
+1. **Deposit.** You deposit USDC into the Morney vault. You can withdraw it at any time. In production, the vault supplies the USDC to Aave on Monad, where borrowers pay interest. On testnet, the yield is simulated.
+2. **Earn Tickets.** At the end of each day, the vault gives you Tickets for the USDC you held for that whole day. 100 USDC earns 1 Ticket per day. Tickets are play credits, not a claim on USDC.
+3. **Stake Tickets on the hexes.** Each day has a yield pool. You put Tickets on one or more of 6 hexes and lock in with one signature.
+4. **The draw.** One hex wins. The draw is weighted by Tickets: a hex with more Tickets has better odds.
+5. **Share the yield.** Morney keeps **5%** of the day's yield. Everyone on the winning hex splits the other **95%** by their share of that hex. The USDC goes straight to their wallets.
+6. **Multiply Tickets (optional).** Ticket Boosters (Roulette and Blackjack) let you try to win more Tickets, or lose the Tickets you put in.
 
 ## Daily payout model
 
-`Player reward = Daily prize pool × Player’s eligible points ÷ Total eligible points`
+`Your reward = 95% × day's yield × your Tickets on the winning hex ÷ all Tickets on the winning hex`
 
-For example, if the vault generates **$100 in daily yield**, Morney retains **$5** and allocates **$95** to rewards. A player holding **10% of that day’s eligible Prize Points** receives **$9.50**.
+For example, the day's yield is **$2,000**. Morney keeps **$100** (5%). Hex 3 wins, and it holds 4 Tickets. You have 1 of them, so you get **$1,900 × 1 ÷ 4 = $475**.
 
-Payouts depend on actual available yield and settled results. A prediction that has not resolved contributes to a later payout cycle. This model distributes rewards through points rather than requiring a separate random jackpot draw.
+If nobody staked on the winning hex, the yield stays in the reserve for later days.
 
 ## What makes Morney different
 
-Morney combines a shared savings vault with a flexible gaming experience. Users can choose how they participate while competing for the same daily reward pool. Savings determine access to play; eligible game results determine reward allocation.
-
-The platform’s revenue comes from its **5% share of generated yield**, aligning revenue with the earning activity of the vault. The core model does not require users to purchase Tickets or wager their deposits.
+- **Savings never play.** Games use Tickets only. The vault keeps deposits apart from every game.
+- **One shared prize.** Many small savers pool their yield into one daily prize that is worth playing for.
+- **Fair odds by Tickets.** More Tickets on a hex give it better odds, and the prize is shared by Tickets.
+- **Aligned revenue.** Morney earns a **5% share of the yield**, so revenue grows with deposits. Players never buy Tickets.
 
 ## Principal and risk
 
@@ -174,9 +173,11 @@ Morney does not use deposited principal to fund game losses, prizes, or the plat
 
 However, deposits remain exposed to lending-protocol, smart-contract, stablecoin, and liquidity risks. Withdrawals depend on vault rules and underlying liquidity, and neither yield nor individual rewards are guaranteed.
 
+**Testnet demo limits:** the yield, the other players' Tickets on each hex, and the 3,000,000 USDC prize reserve are simulated. All draws use block data for randomness, which is safe for a demo only. The contracts have no audit.
+
 ## Hackathon scope
 
-For Monad Blitz Mumbai, Morney ships the savings vault, daily Tickets, one game, and daily reward distribution. Trading is a roadmap feature.
+For Monad Blitz Mumbai, Morney ships the savings vault, daily Tickets, the Hex Yield Draw with yield payouts, two Ticket Boosters (Roulette and Blackjack), and a gasless Next day button. Real Aave yield, verifiable randomness and Morney Trade are roadmap items.
 
 ## Future roadmap
 
