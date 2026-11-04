@@ -9,8 +9,7 @@
     "deploy": "hardhat run scripts/deploy.ts --network monadTestnet",
     "verify": "hardhat run scripts/verify.ts --network monadTestnet",
     "smoke": "hardhat run scripts/smoke.ts --network monadTestnet",
-    "send-usdc": "hardhat run scripts/send-usdc.ts --network monadTestnet",
-    "keeper": "hardhat run scripts/keeper.ts --network monadTestnet"
+    "send-usdc": "hardhat run scripts/send-usdc.ts --network monadTestnet"
   },
   "keywords": [],
   "type": "module",

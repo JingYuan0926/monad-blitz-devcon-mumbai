@@ -42,24 +42,18 @@ while ((await vault.read.ticketsOf([me])) === 0n) {
 }
 console.log(`  tickets:   ${await tickets()}`);
 
-// Cover every hex with 1 Ticket, so this wallet is always on the winning hex.
-// The first stake opens a round, so all 6 stakes land in the same round.
-for (let h = 1; h <= 6; h++) await step(`stake ${h}`, game.write.stake([h, 1n], { gas: 1_000_000n }));
-const round = await game.read.currentRoundId();
-const wonBefore = 0n;
-console.log(`  round ${round} is open. Waiting for it to end…`);
-const settleBy = Date.now() + 120_000;
-for (;;) {
-  const [, yieldPool, , , winningHex, settled, paid, fee] = await game.read.getRound([round]);
-  if (settled) {
-    console.log(`  round ${round}: hex ${winningHex} won, pool ${formatUnits(yieldPool, 6)} USDC, paid ${formatUnits(paid, 6)}, fee ${formatUnits(fee, 6)}`);
-    break;
-  }
-  if (Date.now() > settleBy) throw new Error("The round did not settle.");
-  if (await game.read.hasPending()) await step("settle", game.write.settlePending({ gas: 1_000_000n }));
-  else await new Promise((r) => setTimeout(r, 2_000));
+// Open a day if the last one is drawn, stake 10 Tickets on hex 3, then draw with the demo switch on.
+let round = await game.read.currentRoundId();
+if ((await game.read.getRound([round]))[4]) {
+  await step("next day", game.write.nextDay({ gas: 800_000n }));
+  round = await game.read.currentRoundId();
 }
-console.log(`  this wallet won ${formatUnits((await game.read.wonInRound([round, me])) - wonBefore, 6)} USDC in round ${round}`);
+await step("stake", game.write.stake([3, 10n], { gas: 400_000n }));
+await step("draw", game.write.draw([true], { gas: 1_500_000n }));
+const [crowd, totals, yieldPool, winningHex, , forced, paid, fee] = await game.read.getRound([round]);
+console.log(`  day ${round}: crowd ${crowd.join(", ")}`);
+console.log(`  hex ${winningHex} won (forced: ${forced}). Yield ${formatUnits(yieldPool, 6)} USDC, fee ${formatUnits(fee, 6)}`);
+console.log(`  this wallet had 10 of ${totals[2]} Tickets on hex 3 and won ${formatUnits(paid, 6)} USDC`);
 
 await step("withdraw", vault.write.withdraw([parseUnits("100", 6)]));
 console.log(`  principal: ${formatUnits(await vault.read.principalOf([me]), 6)} USDC`);
