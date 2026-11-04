@@ -1,8 +1,8 @@
 {
   "chainId": 10143,
   "network": "monadTestnet",
-  "deployedAt": "2026-11-04T11:30:31.725Z",
-  "startBlock": "76904054",
+  "deployedAt": "2026-11-04T11:50:27.366Z",
+  "startBlock": "76907938",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
   "dayLengthSeconds": 10,
   "constructorArgs": {
@@ -1034,7 +1034,7 @@
       ]
     },
     "HexGame": {
-      "address": "0x74737e73290b7daa1b4908c74693f5259d319ae3",
+      "address": "0x1237eb3b8c735de71370dadc56e7325da5cc3260",
       "abi": [
         {
           "inputs": [

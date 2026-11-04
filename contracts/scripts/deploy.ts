@@ -37,6 +37,7 @@ console.log(`Balance:  ${(await publicClient.getBalance({ address: deployer.acco
 
 type Previous = {
   contracts?: { HexGame?: { address: string } };
+  casino?: unknown;
   constructorArgs?: { SmemVault?: unknown[] };
 };
 let previous: Previous = {};
@@ -116,6 +117,8 @@ const deployment = {
     SmemVault: stringify(vaultArgs),
     HexGame: stringify(gameArgs),
   },
+  // Keep the Ticket Booster addresses from npm run deploy-casino.
+  ...(previous.casino ? { casino: previous.casino } : {}),
   contracts: {
     MockUSDC: { address: usdc.address, abi: await abiOf("MockUSDC") },
     SmemVault: { address: vault.address, abi: await abiOf("SmemVault") },

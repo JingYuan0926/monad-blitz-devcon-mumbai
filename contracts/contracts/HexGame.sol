@@ -10,7 +10,8 @@ import {SmemVault} from "./SmemVault.sol";
 /// @notice A daily yield draw on 6 hexes, moved forward by hand for demos.
 ///         1. Each day opens with a random estimated yield pool and a random crowd of Tickets on every hex.
 ///         2. Players stake Tickets on hexes. The game spends the staked Tickets.
-///         3. A player presses draw. One hex wins at random. A demo flag can make the caller's hex win.
+///         3. A player presses draw. One hex wins at random, weighted by its Tickets: more Tickets, better odds.
+///            A demo flag can make the caller's hex win.
 ///         4. The treasury takes 5%. Each player on the winning hex gets 95% x (their Tickets / all Tickets on it).
 ///            The simulated crowd's share stays in the reserve.
 ///         5. The day stays on its result until someone calls nextDay().
@@ -155,7 +156,19 @@ contract HexGame {
             }
         }
         r.forced = winning != 0;
-        if (winning == 0) winning = uint8(uint256(_seed(currentRoundId, "draw")) % TILES) + 1;
+        if (winning == 0) {
+            // Weighted draw: a hex with more Tickets has a bigger chance to win.
+            uint256 boardTotal;
+            for (uint256 i = 0; i < TILES; i++) boardTotal += r.totals[i];
+            uint256 ticket = uint256(_seed(currentRoundId, "draw")) % boardTotal;
+            for (uint256 i = 0; i < TILES; i++) {
+                if (ticket < r.totals[i]) {
+                    winning = uint8(i + 1);
+                    break;
+                }
+                ticket -= r.totals[i];
+            }
+        }
         _settle(currentRoundId, winning);
     }
 
