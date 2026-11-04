@@ -40,4 +40,24 @@ Smem does not use deposited principal to fund game losses, prizes, or the platfo
 
 However, deposits remain exposed to lending-protocol, smart-contract, stablecoin, and liquidity risks. Withdrawals depend on vault rules and underlying liquidity, and neither yield nor individual rewards are guaranteed.
 
+## Hackathon scope
+
+For Monad Blitz Mumbai, Smem ships the savings vault, daily Tickets, one game, and daily reward distribution. Trading is a roadmap feature.
+
+## Future roadmap
+
+**Smem Trade:** A planned long-and-short trading mode where eligible collateral earns Tickets over time. Traders can use those Tickets across Smem’s gaming ecosystem while managing their positions. Trading margin remains exposed to losses and liquidation.
+
+For example:
+
+- A user allocates **$100 as trading margin**.
+- At 5× leverage, they open a **$500 position**.
+- Tickets accrue based on the **eligible $100 collateral and time committed**, not the $500 exposure.
+- Those Tickets can be used in Smem’s games and rewards system.
+- The trade independently earns or loses money, with fees, funding, and liquidation risk.
+
+**Tickets are an additional reward—not protection against trading losses.** The same funds count only once: moving money from savings into trading margin does not earn duplicate allocations.
+
+Margin does not automatically generate lending yield. Smem Trade needs an exchange integration that explicitly supports yield-bearing collateral, or a separate budget to fund trading rewards.
+
 **Smem’s vision is to make saving more engaging: keep savings productive, use Tickets to play, and compete for a share of daily yield.**
