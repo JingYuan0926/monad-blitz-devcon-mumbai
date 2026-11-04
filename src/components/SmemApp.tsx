@@ -334,7 +334,7 @@ export function SmemApp() {
         </div>
         <div className="flex items-center gap-2">
           <Link
-            href="/casino"
+            href="/play"
             className="rounded-full border border-accent/60 px-3 py-1.5 text-xs text-accent-strong hover:bg-accent/10"
           >
             Ticket Boosters

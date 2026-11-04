@@ -85,7 +85,7 @@ Your savings earn Tickets. Use your Tickets in games and boosters. Winners share
 | Game | Type | Status |
 | --- | --- | --- |
 | Hex Yield Draw | Draw: stake Tickets on 1 of 6 hexes. The winning hex splits the day's yield by share. | Live on testnet |
-| Ticket Boosters: Roulette and Blackjack | Earn more Tickets | Live on testnet: <https://morney.fun/casino> |
+| Ticket Boosters: Roulette and Blackjack | Earn more Tickets | Live on testnet: <https://morney.fun/play> |
 | Daily prediction challenges | Prediction | Planned |
 
 Every game uses the same Tickets.
@@ -94,7 +94,7 @@ Every game uses the same Tickets.
 
 Savings are the main way to earn Tickets. **Ticket Boosters** are a second way: put Tickets in and try to multiply them. You can come out with more Tickets, or lose the Tickets you put in. Your saved USDC never moves. Extra Tickets give you a bigger share in the Hex Yield Draw, where Tickets win real USDC yield.
 
-Two boosters are live as contracts on Monad Testnet. The vault lets them spend and pay Tickets. The [Ticket Boosters page](https://morney.fun/casino) lists them. You can play both on that page: Roulette spins in one transaction, and Blackjack uses Deal, then Hit or Stand.
+Two boosters are live as contracts on Monad Testnet. The vault lets them spend and pay Tickets. The [Ticket Boosters page](https://morney.fun/play) lists them. You can play both on that page: Roulette spins in one transaction, and Blackjack uses Deal, then Hit or Stand.
 
 | Booster | Contract | How to play | Tickets you get back |
 | --- | --- | --- | --- |
@@ -136,7 +136,7 @@ The app uses the deployed testnet contracts in `src/contracts/deployment.json`.
 | Path | What it holds |
 | --- | --- |
 | `src/app/(landing)/` | Landing page at `/` |
-| `src/app/(app)/` | Savings app at `/app` and Ticket Boosters at `/casino` (wagmi + viem + MetaMask) |
+| `src/app/(app)/` | Savings app at `/app` and Ticket Boosters at `/play` (wagmi + viem + MetaMask) |
 | `src/app/api/next-day/` | Server route that opens the next day for the player |
 | `contracts/contracts/` | Solidity contracts |
 | `contracts/test/` | Contract tests |
