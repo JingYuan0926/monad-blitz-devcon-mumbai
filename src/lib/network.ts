@@ -26,11 +26,39 @@ export const rpcFor = (n: NetworkName) => (n === "testnet" ? "https://testnet-rp
 /// The demo token is "USDC" on testnet and "mUSD" (Morney Demo USD) on mainnet.
 export const TOKEN_SYMBOL = NETWORK === "testnet" ? "USDC" : "mUSD";
 
-export function setNetwork(n: NetworkName) {
+/// Saves the choice, asks MetaMask to move to the same network, then reloads the page.
+export async function setNetwork(n: NetworkName) {
   try {
     window.localStorage.setItem(STORAGE_KEY, n);
   } catch {
     // Storage is blocked. The page stays on the current network.
+  }
+  const eth = (window as { ethereum?: { request: (a: { method: string; params?: unknown[] }) => Promise<unknown> } })
+    .ethereum;
+  const target = chainFor(n);
+  if (eth) {
+    const chainId = `0x${target.id.toString(16)}`;
+    try {
+      await eth.request({ method: "wallet_switchEthereumChain", params: [{ chainId }] });
+    } catch (e) {
+      // 4902: MetaMask does not know this network yet, so add it.
+      if ((e as { code?: number }).code === 4902) {
+        await eth
+          .request({
+            method: "wallet_addEthereumChain",
+            params: [
+              {
+                chainId,
+                chainName: target.name,
+                nativeCurrency: target.nativeCurrency,
+                rpcUrls: [rpcFor(n)],
+                blockExplorerUrls: [target.blockExplorers.default.url],
+              },
+            ],
+          })
+          .catch(() => {});
+      }
+    }
   }
   window.location.reload();
 }

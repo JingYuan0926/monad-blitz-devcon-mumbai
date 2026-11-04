@@ -64,6 +64,16 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   const publicClient = usePublicClient({ chainId: chain.id });
 
   const wrongChain = isConnected && chainId !== chain.id;
+  // Keep MetaMask on the same network as the app: ask it to switch once when they differ.
+  const [askedSwitch, setAskedSwitch] = useState(false);
+  useEffect(() => {
+    if (!wrongChain || askedSwitch) return;
+    const id = setTimeout(() => {
+      setAskedSwitch(true);
+      switchChain.mutate({ chainId: chain.id });
+    }, 0);
+    return () => clearTimeout(id);
+  }, [wrongChain, askedSwitch, switchChain]);
   const ready = mounted && isConnected && !wrongChain && !!address;
 
   const [busy, setBusy] = useState<Busy>(null);
@@ -278,14 +288,21 @@ export function SmemApp({ view }: { view: "savings" | "draw" }) {
   async function onPlay() {
     if (planTotal === 0n) return setError("Put Tickets on at least one hex.");
     if (Number(planTotal) > wholeTickets) return setError("You do not have enough Tickets for this plan.");
-    const receipt = await run("play", () =>
-      write.mutateAsync({
+    const receipt = await run("play", async () => {
+      // Estimate the gas, then add a 50% margin. A fixed high limit makes MetaMask show a fee alert.
+      const estimate = await publicClient!.estimateContractGas({
         ...hexGame,
         functionName: "playMany",
         args: [planTickets, forceWin],
-        gas: 2_000_000n,
-      }),
-    );
+        account: address!,
+      });
+      return write.mutateAsync({
+        ...hexGame,
+        functionName: "playMany",
+        args: [planTickets, forceWin],
+        gas: (estimate * 3n) / 2n + 50_000n,
+      });
+    });
     if (receipt) {
       setRevealUntil(now + 5000);
       setPlan(["", "", "", "", "", ""]);
