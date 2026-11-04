@@ -2,6 +2,8 @@
 
 import { keepPreviousData } from "@tanstack/react-query";
 import Link from "next/link";
+
+import { Wordmark } from "@/components/Logo";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { formatUnits, maxUint256, parseUnits, type Hash } from "viem";
 import {
@@ -326,11 +328,9 @@ export function SmemApp() {
       {/* Header */}
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="hex grid h-10 w-11 place-items-center bg-accent text-lg font-bold">M</div>
-          <div>
-            <h1 className="text-xl font-semibold leading-tight">Morney</h1>
-            <p className="text-xs text-muted">Save more. Play more.</p>
-          </div>
+          <Link href="/" aria-label="Morney home">
+            <Wordmark />
+          </Link>
         </div>
         <div className="flex items-center gap-2">
           <Link
