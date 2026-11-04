@@ -92,6 +92,17 @@ contract HexGame {
     /// @param hexId The hex you pick, from 1 to 6.
     /// @param tickets The number of whole Tickets you stake.
     function stake(uint8 hexId, uint256 tickets) external {
+        _stake(hexId, tickets);
+    }
+
+    /// @notice Stakes and draws in one transaction.
+    /// @param forceMyHex Demo only. When true, the hex where the caller staked the most wins.
+    function play(uint8 hexId, uint256 tickets, bool forceMyHex) external {
+        _stake(hexId, tickets);
+        _draw(forceMyHex);
+    }
+
+    function _stake(uint8 hexId, uint256 tickets) internal {
         if (hexId < 1 || hexId > TILES) revert InvalidTile();
         if (tickets == 0) revert ZeroStake();
         Round storage r = rounds[currentRoundId];
@@ -110,6 +121,10 @@ contract HexGame {
     /// @notice Ends the day and draws the winning hex.
     /// @param forceMyHex Demo only. When true, the hex where the caller staked the most wins.
     function draw(bool forceMyHex) external {
+        _draw(forceMyHex);
+    }
+
+    function _draw(bool forceMyHex) internal {
         Round storage r = rounds[currentRoundId];
         if (r.settled) revert DayClosed();
 

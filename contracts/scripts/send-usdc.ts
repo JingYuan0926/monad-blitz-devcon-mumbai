@@ -1,4 +1,4 @@
-// Mints test USDC with the faucet and sends it to an address.
+// Mints test USDC to an address. Only the USDC owner (the deployer) can mint.
 // Run: TO=0xYourAddress AMOUNT=5000 npm run send-usdc
 import { readFile } from "node:fs/promises";
 import path from "node:path";
@@ -16,18 +16,10 @@ const deployment = JSON.parse(await readFile(path.resolve(here, "../../src/contr
 
 const { viem } = await network.create();
 const publicClient = await viem.getPublicClient();
-const [wallet] = await viem.getWalletClients();
 const usdc = await viem.getContractAt("MockUSDC", getAddress(deployment.contracts.MockUSDC.address));
 
-const perFaucet = await usdc.read.FAUCET_AMOUNT();
-while ((await usdc.read.balanceOf([wallet.account.address])) < amount) {
-  const hash = await usdc.write.faucet();
-  await publicClient.waitForTransactionReceipt({ hash });
-  console.log(`Minted ${formatUnits(perFaucet, 6)} USDC`);
-}
-
-const hash = await usdc.write.transfer([getAddress(to), amount]);
+const hash = await usdc.write.mint([getAddress(to), amount]);
 await publicClient.waitForTransactionReceipt({ hash });
-console.log(`Sent ${formatUnits(amount, 6)} USDC to ${to}`);
+console.log(`Minted ${formatUnits(amount, 6)} USDC to ${to}`);
 console.log(`https://testnet.monadexplorer.com/tx/${hash}`);
 console.log(`Balance of ${to}: ${formatUnits(await usdc.read.balanceOf([getAddress(to)]), 6)} USDC`);

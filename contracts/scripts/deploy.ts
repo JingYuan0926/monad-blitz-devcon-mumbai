@@ -12,18 +12,18 @@ import { getAddress, parseUnits } from "viem";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outFile = path.resolve(here, "../../src/contracts/deployment.json");
 
-// Tickets that 1 USDC earns for 1 full day. 0.1 means 10 USDC earns 1 Ticket per day.
-const TICKETS_PER_USDC_PER_DAY = process.env.TICKETS_PER_USDC_PER_DAY ?? "0.1";
+// Tickets that 1 USDC earns for 1 full day. 0.01 means 100 USDC earns 1 Ticket per day.
+const TICKETS_PER_USDC_PER_DAY = process.env.TICKETS_PER_USDC_PER_DAY ?? "0.01";
 // The length of one day in seconds. The demo uses 10 seconds. Production uses 86400.
 const DAY_LENGTH_SECONDS = BigInt(process.env.DAY_LENGTH_SECONDS ?? "10");
 // The simulated yield pool for each round, in USDC.
-const MIN_YIELD_POOL = parseUnits(process.env.MIN_YIELD_POOL ?? "1", 6);
-const MAX_YIELD_POOL = parseUnits(process.env.MAX_YIELD_POOL ?? "10", 6);
+const MIN_YIELD_POOL = parseUnits(process.env.MIN_YIELD_POOL ?? "1000", 6);
+const MAX_YIELD_POOL = parseUnits(process.env.MAX_YIELD_POOL ?? "5000", 6);
 // Simulated Tickets from other players on each hex, per day.
-const MIN_CROWD = BigInt(process.env.MIN_CROWD ?? "5");
-const MAX_CROWD = BigInt(process.env.MAX_CROWD ?? "120");
+const MIN_CROWD = BigInt(process.env.MIN_CROWD ?? "1");
+const MAX_CROWD = BigInt(process.env.MAX_CROWD ?? "20");
 // USDC that the deployer sends to HexGame to pay the simulated yield pools.
-const PRIZE_RESERVE = parseUnits(process.env.PRIZE_RESERVE ?? "5000", 6);
+const PRIZE_RESERVE = parseUnits(process.env.PRIZE_RESERVE ?? "3000000", 6);
 
 const { viem, networkName } = await network.create();
 const publicClient = await viem.getPublicClient();
@@ -92,11 +92,8 @@ if (process.env.VAULT_ADDRESS && oldGame && getAddress(oldGame) !== getAddress(g
   }
 }
 
-// Fund the prize reserve with test USDC from the faucet.
-while ((await usdc.read.balanceOf([deployer.account.address])) < PRIZE_RESERVE) {
-  await wait(await usdc.write.faucet());
-}
-await wait(await usdc.write.transfer([game.address, PRIZE_RESERVE]));
+// Fund the prize reserve. The owner mints test USDC straight to the game.
+await wait(await usdc.write.mint([game.address, PRIZE_RESERVE]));
 console.log(`Prize reserve: ${PRIZE_RESERVE / 10n ** 6n} USDC`);
 
 async function abiOf(name: string) {

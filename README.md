@@ -15,9 +15,9 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 
 | Contract | Address | Source |
 | --- | --- | --- |
-| SmemVault | [`0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914`](https://testnet.monadexplorer.com/address/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xf98271e56cac1f9a9e2bb08570c2c5c1afe63914) |
-| HexGame | [`0x096311607135e063ec669bf7d4abf77e634d6225`](https://testnet.monadexplorer.com/address/0x096311607135e063ec669bf7d4abf77e634d6225) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x096311607135e063ec669bf7d4abf77e634d6225) |
-| MockUSDC (USDC) | [`0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907`](https://testnet.monadexplorer.com/address/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xc1b8c6b7000b1aeb43fd36feeb9a0610e38b1907) |
+| SmemVault | [`0x6b3067314c8f76efb6ac9da6ec263eb933f428df`](https://testnet.monadexplorer.com/address/0x6b3067314c8f76efb6ac9da6ec263eb933f428df) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x6b3067314c8f76efb6ac9da6ec263eb933f428df) |
+| HexGame | [`0x5c27258f989bc1acb56153e44ee59518473a1b24`](https://testnet.monadexplorer.com/address/0x5c27258f989bc1acb56153e44ee59518473a1b24) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0x5c27258f989bc1acb56153e44ee59518473a1b24) |
+| MockUSDC (USDC) | [`0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92`](https://testnet.monadexplorer.com/address/0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92) | [Verified](https://sourcify-api-monad.blockvision.org/repo-ui/10143/0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92) |
 
 ### What works today
 
@@ -26,16 +26,16 @@ The deposited savings remain separate from gameplay. Players compete using Ticke
 3. Deposit USDC into the vault. You can withdraw your full deposit at any time.
 4. Wait for the day to end. Tickets arrive only at the end of each day.
 5. Play the **Hex Yield Draw**. Each day shows today's total yield (an estimate) and the Tickets that other players put on each of the 6 hexes.
-6. Pick a hex and stake Tickets. The game spends the staked Tickets.
-7. Press **Draw the winner**. One hex wins at random.
+6. Pick a hex, enter your stake and press **Stake & draw**. The game spends the staked Tickets.
+7. The board spins for 5 seconds. Then one hex wins at random.
 8. Morney keeps 5% of the yield. Everyone on the winning hex splits the other 95% by their share of that hex. Your USDC goes straight to your wallet.
 9. The board stays on the result. Press **Next day** to get a new random yield and new Tickets on every hex.
 
-**Demo switch:** Tick **Demo: make my hex win** before you draw. Then the hex where you staked the most wins. This exists only for live demos.
+**Demo switch:** Tick **Demo: make my hex win** before you draw. Then your hex wins. This exists only for live demos.
 
-**How Tickets work:** 10 USDC held for a full day earns 1 Ticket when the day ends. For example, 100 USDC earns 10 Tickets per day. Each day pays the lowest balance you held during that day. A deposit starts to earn on the next full day. In this demo, **1 day = 10 seconds**. The page shows your Tickets per day and a countdown to the end of the day.
+**How Tickets work:** 100 USDC held for a full day earns 1 Ticket when the day ends. For example, 250 USDC earns 2.5 Tickets per day. Each day pays the lowest balance you held during that day. A deposit starts to earn on the next full day. In this demo, **1 day = 10 seconds**. The page shows your Tickets per day and a countdown to the end of the day.
 
-**Hex Yield Draw example:** Today's yield is 8.00 USDC. Other players have 15 Tickets on hex 3, and you stake 5. Hex 3 wins. Morney keeps 0.40 USDC (5%). Hex 3 shares 7.60 USDC: you get 7.60 × 5 ÷ 20 = 1.90 USDC.
+**Hex Yield Draw example:** Today's yield is 2,000 USDC. Other players have 3 Tickets on hex 3, and you stake 1. Hex 3 wins. Morney keeps 100 USDC (5%). Hex 3 shares 1,900 USDC: you get 1,900 × 1 ÷ 4 = 475 USDC.
 
 The game can spend Tickets and pay out the yield pool. It cannot touch anyone's savings. Only the depositor can withdraw their deposit. Only the depositor can withdraw their deposit.
 
@@ -53,7 +53,7 @@ Every game uses the same Tickets. A loss costs only Tickets, never your savings.
 
 The vault contract is named `SmemVault` because we deployed it before the project rename. The contract name does not change how it works.
 
-**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each day's yield is a simulated random amount from 1 to 10 USDC, paid from a prize reserve. The other players' Tickets on each hex are simulated too (5 to 120 per hex). In production, the pool is the real yield that the vault earns on Aave.
+**Testnet limits:** The yield is simulated, because Aave is not on Monad Testnet. The hex draw uses block data, so it is for the demo only. Each day's yield is a simulated random amount from 1,000 to 5,000 USDC, paid from a 3,000,000 USDC prize reserve. The other players' Tickets on each hex are simulated too (1 to 20 per hex). In production, the pool is the real yield that the vault earns on Aave.
 
 ## Run it yourself
 

@@ -27,7 +27,7 @@ import {
 } from "@/lib/contracts";
 import { addressUrl, chain, txUrl } from "@/lib/wagmi";
 
-type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "stake" | "draw" | "nextDay" | "switch" | "migrate";
+type Busy = null | "connect" | "faucet" | "deposit" | "withdraw" | "play" | "nextDay" | "switch" | "migrate";
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 const fmt = (n: number, digits = 2) =>
@@ -67,7 +67,9 @@ export function SmemApp() {
   const [lastTx, setLastTx] = useState<{ label: string; hash: Hash } | null>(null);
   const [amount, setAmount] = useState("100");
   const [tile, setTile] = useState<number>(1);
-  const [stake, setStake] = useState("10");
+  const [stake, setStake] = useState("1");
+  // After a play, the board spins for 5 seconds before it shows the result.
+  const [revealUntil, setRevealUntil] = useState(0);
   const [forceWin, setForceWin] = useState(false);
 
   // A browser clock that ticks every 100 ms. It stays 0 during the server prerender.
@@ -260,15 +262,18 @@ export function SmemApp() {
     await run("withdraw", () => write.mutateAsync({ ...vault, functionName: "withdraw", args: [value] }));
   }
 
-  async function onStake() {
+  async function onPlay() {
     const staked = BigInt(Math.max(0, Math.floor(Number(stake) || 0)));
     if (staked === 0n) return setError("Stake at least 1 Ticket.");
     if (Number(staked) > wholeTickets) return setError("You do not have enough Tickets for this stake.");
-    await run("stake", () => write.mutateAsync({ ...hexGame, functionName: "stake", args: [tile, staked], gas: 400_000n }));
+    const receipt = await run("play", () =>
+      write.mutateAsync({ ...hexGame, functionName: "play", args: [tile, staked, forceWin], gas: 1_500_000n }),
+    );
+    if (receipt) {
+      setRevealUntil(Date.now() + 5000);
+      await lastReads.refetch();
+    }
   }
-
-  const onDraw = () =>
-    run("draw", () => write.mutateAsync({ ...hexGame, functionName: "draw", args: [forceWin], gas: 1_500_000n }));
 
   const onNextDay = () =>
     run("nextDay", () => write.mutateAsync({ ...hexGame, functionName: "nextDay", gas: 800_000n }));
@@ -277,7 +282,11 @@ export function SmemApp() {
   const roundTotals = current?.[1] ?? ZERO_STAKES;
   const roundTickets = roundTotals.reduce((a, b) => a + b, 0n);
   const roundPool = current?.[2] ?? 0n;
-  const winningHex = settled ? current?.[3] : undefined;
+  const revealing = busy === "play" || now < revealUntil;
+  const revealSeconds = Math.max(0, Math.ceil((revealUntil - now) / 1000));
+  const showResult = settled && !revealing;
+  const rollingHex = revealing ? TILES[Math.floor(now / 120) % TILES.length] : undefined;
+  const winningHex = showResult ? current?.[3] : undefined;
   const myTotal = myStakes.reduce((a, b) => a + b, 0n);
   const myOnWinner = winningHex ? myStakes[winningHex - 1] : 0n;
   const winnerTotal = winningHex ? roundTotals[winningHex - 1] : 0n;
@@ -353,7 +362,7 @@ export function SmemApp() {
           value={ready ? fmt(toTickets(shownTickets)) : "—"}
           unit={
             ready
-              ? `+${fmt(accruing)} building up · ${fmt(toTickets(ticketsPerDay), 0)}/day`
+              ? `+${fmt(accruing)} building up · ${fmt(toTickets(ticketsPerDay))}/day`
               : "Tickets"
           }
           highlight
@@ -382,7 +391,7 @@ export function SmemApp() {
             </button>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Every 10 USDC you hold for a full day earns 1 Ticket when the day ends. Withdraw your full deposit at any
+            Every 100 USDC you hold for a full day earns 1 Ticket when the day ends. Withdraw your full deposit at any
             time.
           </p>
 
@@ -428,11 +437,11 @@ export function SmemApp() {
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-semibold">Hex Yield Draw</h3>
             <span className="rounded-full border border-border px-3 py-1 text-xs text-muted">
-              Day {currentId.toString()} · {settled ? "drawn" : "open"}
+              Day {currentId.toString()} · {revealing ? "drawing" : settled ? "drawn" : "open"}
             </span>
           </div>
           <p className="mt-1 text-sm text-muted">
-            Stake Tickets on a hex, then draw. One hex wins today&apos;s yield. Everyone on it splits 95% by their share
+            Pick a hex and stake Tickets. Five seconds later, one hex wins today&apos;s yield. Everyone on it splits 95% by their share
             of the hex. Morney keeps 5%.
           </p>
 
@@ -445,7 +454,8 @@ export function SmemApp() {
             {TILES.map((t) => {
               const picked = t === tile;
               const won = winningHex === t;
-              const lost = settled && !won;
+              const lost = showResult && !won;
+              const rolling = rollingHex === t;
               const onHex = roundTotals[t - 1];
               const mine = myStakes[t - 1];
               return (
@@ -456,9 +466,11 @@ export function SmemApp() {
                   aria-label={`Hex ${t}`}
                   className={[
                     "hex grid aspect-[1.15] w-full max-w-28 place-items-center font-semibold transition",
-                    won
+                    rolling
+                      ? "hex-rolling bg-accent-strong text-background"
+                      : won
                       ? "bg-win text-background"
-                      : picked && !settled
+                      : picked && !showResult
                         ? "bg-accent text-foreground"
                         : lost
                           ? "bg-surface-2 text-muted opacity-50"
@@ -478,7 +490,11 @@ export function SmemApp() {
             {roundTickets.toLocaleString()} Tickets on the board today · you staked {myTotal.toLocaleString()}
           </p>
 
-          {!settled ? (
+          {revealing ? (
+            <div aria-live="polite" className="mt-4 rounded-xl border border-accent/60 bg-accent/10 px-4 py-4 text-center text-sm">
+              {busy === "play" ? "Confirm in MetaMask, then the draw runs on chain…" : `Drawing the winning hex… ${revealSeconds}s`}
+            </div>
+          ) : !settled ? (
             <>
               <label className="mt-4 block text-xs uppercase tracking-wider text-muted" htmlFor="stake">
                 Stake (Tickets) · you have {ready ? wholeTickets.toLocaleString() : "—"}
@@ -491,7 +507,7 @@ export function SmemApp() {
                   value={stake}
                   onChange={(e) => setStake(e.target.value.replace(/[^0-9]/g, ""))}
                 />
-                {[10, 50, 100].map((n) => (
+                {[1, 5, 10].map((n) => (
                   <button
                     key={n}
                     className="rounded-xl border border-border px-3 text-xs text-muted hover:text-foreground"
@@ -501,14 +517,9 @@ export function SmemApp() {
                   </button>
                 ))}
               </div>
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <button className="btn-secondary" onClick={onStake} disabled={!ready || !!busy}>
-                  {busy === "stake" ? "Staking…" : `Stake ${stake || 0} on hex ${tile}`}
-                </button>
-                <button className="btn-primary" onClick={onDraw} disabled={!ready || !!busy}>
-                  {busy === "draw" ? "Drawing on chain…" : "Draw the winner"}
-                </button>
-              </div>
+              <button className="btn-primary mt-3 w-full" onClick={onPlay} disabled={!ready || !!busy}>
+                Stake {stake || 0} Ticket{stake === "1" ? "" : "s"} on hex {tile} &amp; draw
+              </button>
               <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-muted">
                 <input
                   type="checkbox"

@@ -20,11 +20,8 @@ export const hexGame = {
 
 /// Older vaults that use the same USDC token. The app finds deposits left in them
 /// and offers to move them into the current vault.
-export const LEGACY_VAULTS: Address[] = [
-  "0x366ad9886c8460677240843f1ef702157c206ff0",
-  "0x535189c9e737def24a6ff32e27591f6e7228af4d",
-  "0xefac6f8d5074d5a60e08899896b0a3441dcb38fe",
-];
+// The current vault uses a new USDC token, so older vaults (on the old token) are not listed.
+export const LEGACY_VAULTS: Address[] = [];
 export const legacyVaultAbi = parseAbi([
   "function principalOf(address user) view returns (uint256)",
   "function withdraw(uint256 amount)",

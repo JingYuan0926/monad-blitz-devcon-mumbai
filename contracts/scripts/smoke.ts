@@ -30,8 +30,8 @@ async function step(label: string, send: Promise<Hash>) {
 const tickets = async () => formatUnits(await vault.read.ticketsOf([me]), 18);
 
 await step("faucet", usdc.write.faucet());
-await step("approve", usdc.write.approve([vault.address, parseUnits("100", 6)]));
-await step("deposit", vault.write.deposit([parseUnits("100", 6)]));
+await step("approve", usdc.write.approve([vault.address, parseUnits("1000", 6)]));
+await step("deposit", vault.write.deposit([parseUnits("1000", 6)]));
 console.log(`  principal: ${formatUnits(await vault.read.principalOf([me]), 6)} USDC`);
 
 console.log("  waiting for the first full day to end…");
@@ -42,19 +42,18 @@ while ((await vault.read.ticketsOf([me])) === 0n) {
 }
 console.log(`  tickets:   ${await tickets()}`);
 
-// Open a day if the last one is drawn, stake 10 Tickets on hex 3, then draw with the demo switch on.
+// Open a day if the last one is drawn, then stake 1 Ticket on hex 3 and draw with the demo switch on.
 let round = await game.read.currentRoundId();
 if ((await game.read.getRound([round]))[4]) {
   await step("next day", game.write.nextDay({ gas: 800_000n }));
   round = await game.read.currentRoundId();
 }
-await step("stake", game.write.stake([3, 10n], { gas: 400_000n }));
-await step("draw", game.write.draw([true], { gas: 1_500_000n }));
+await step("play", game.write.play([3, 1n, true], { gas: 1_500_000n }));
 const [crowd, totals, yieldPool, winningHex, , forced, paid, fee] = await game.read.getRound([round]);
 console.log(`  day ${round}: crowd ${crowd.join(", ")}`);
 console.log(`  hex ${winningHex} won (forced: ${forced}). Yield ${formatUnits(yieldPool, 6)} USDC, fee ${formatUnits(fee, 6)}`);
-console.log(`  this wallet had 10 of ${totals[2]} Tickets on hex 3 and won ${formatUnits(paid, 6)} USDC`);
+console.log(`  this wallet had 1 of ${totals[2]} Tickets on hex 3 and won ${formatUnits(paid, 6)} USDC`);
 
-await step("withdraw", vault.write.withdraw([parseUnits("100", 6)]));
+await step("withdraw", vault.write.withdraw([parseUnits("1000", 6)]));
 console.log(`  principal: ${formatUnits(await vault.read.principalOf([me]), 6)} USDC`);
 console.log(`  wallet:    ${formatUnits(await usdc.read.balanceOf([me]), 6)} USDC`);

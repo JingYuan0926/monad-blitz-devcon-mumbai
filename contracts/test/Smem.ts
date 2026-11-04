@@ -140,6 +140,18 @@ describe("Smem", async function () {
     assert.equal(await vault.read.principalOf([me]), USDC("100"));
   });
 
+  it("play stakes and draws in one transaction", async function () {
+    const { vault, game } = await setup();
+    await depositAndEarnOneDay(vault, "100");
+    await game.write.play([5, 4n, true], { account: alice.account });
+    const [crowd, totals, yieldPool, winningHex, settled, forced, paid, fee] = await game.read.getRound([1n]);
+    assert.equal(winningHex, 5);
+    assert.equal(settled && forced, true);
+    assert.equal(totals[4], crowd[4] + 4n);
+    assert.equal(paid, ((yieldPool - fee) * 4n) / totals[4]);
+    assert.equal(await vault.read.ticketsOf([alice.account.address]), 96n * TICKET);
+  });
+
   it("stays on the result until nextDay, which opens a new random day", async function () {
     const { vault, game } = await setup();
     await depositAndEarnOneDay(vault, "100");

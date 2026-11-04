@@ -1,31 +1,31 @@
 {
   "chainId": 10143,
   "network": "monadTestnet",
-  "deployedAt": "2026-11-04T11:07:05.793Z",
-  "startBlock": "76899486",
+  "deployedAt": "2026-11-04T11:15:59.889Z",
+  "startBlock": "76901226",
   "deployer": "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
   "dayLengthSeconds": 10,
   "constructorArgs": {
     "SmemVault": [
-      "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
+      "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
       6,
-      "100000000000000000",
+      "10000000000000000",
       "10",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f"
     ],
     "HexGame": [
-      "0xF98271E56Cac1f9a9E2bb08570c2c5C1AFE63914",
-      "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
+      "0x6b3067314c8f76efb6ac9da6ec263eb933f428df",
+      "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
       "0x446f9bb72c82c1da6525f05039fd300c2ba72d3f",
-      "1000000",
-      "10000000",
-      "5",
-      "120"
+      "1000000000",
+      "5000000000",
+      "1",
+      "20"
     ]
   },
   "contracts": {
     "MockUSDC": {
-      "address": "0xc1b8C6B7000b1aeB43FD36fEeB9A0610E38b1907",
+      "address": "0xe0599e3d4f799dd051ea9b9c2db2d245b1796b92",
       "abi": [
         {
           "inputs": [],
@@ -116,6 +116,11 @@
             }
           ],
           "name": "ERC20InvalidSpender",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "NotOwner",
           "type": "error"
         },
         {
@@ -269,6 +274,24 @@
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "mint",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "inputs": [],
           "name": "name",
           "outputs": [
@@ -276,6 +299,19 @@
               "internalType": "string",
               "name": "",
               "type": "string"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
             }
           ],
           "stateMutability": "view",
@@ -363,7 +399,7 @@
       ]
     },
     "SmemVault": {
-      "address": "0xF98271E56Cac1f9a9E2bb08570c2c5C1AFE63914",
+      "address": "0x6b3067314c8f76efb6ac9da6ec263eb933f428df",
       "abi": [
         {
           "inputs": [
@@ -998,7 +1034,7 @@
       ]
     },
     "HexGame": {
-      "address": "0x096311607135e063ec669bf7d4abf77e634d6225",
+      "address": "0x5c27258f989bc1acb56153e44ee59518473a1b24",
       "abi": [
         {
           "inputs": [
@@ -1394,6 +1430,29 @@
         {
           "inputs": [],
           "name": "nextDay",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint8",
+              "name": "hexId",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tickets",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bool",
+              "name": "forceMyHex",
+              "type": "bool"
+            }
+          ],
+          "name": "play",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
